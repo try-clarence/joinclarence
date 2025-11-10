@@ -1,0 +1,341 @@
+### Clarence AI Backend - Authentication API Tests
+### Base URL
+@baseUrl = http://localhost:3000/api/v1
+@contentType = application/json
+
+### Variables (will be set from responses)
+@verificationId = 
+@verificationToken = 
+@accessToken = 
+@refreshToken = 
+@resetId = 
+
+###############################################
+### 1. Check Phone Availability
+###############################################
+
+### Check if phone is available (new user)
+POST {{baseUrl}}/auth/check-phone
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155551234"
+}
+
+### Check if phone is already registered
+POST {{baseUrl}}/auth/check-phone
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155559999"
+}
+
+###############################################
+### 2. Send Verification Code
+###############################################
+
+### Send verification code for registration
+# @name sendVerificationCode
+POST {{baseUrl}}/auth/send-verification-code
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155551234",
+  "purpose": "registration"
+}
+
+###
+# Extract verificationId from response
+@verificationId = {{sendVerificationCode.response.body.verificationId}}
+
+###############################################
+### 3. Verify Code
+###############################################
+
+### Verify SMS code
+# @name verifyCode
+POST {{baseUrl}}/auth/verify-code
+Content-Type: {{contentType}}
+
+{
+  "verificationId": "{{verificationId}}",
+  "code": "123456"
+}
+
+###
+# Extract verificationToken from response
+@verificationToken = {{verifyCode.response.body.verificationToken}}
+
+### Test with invalid code
+POST {{baseUrl}}/auth/verify-code
+Content-Type: {{contentType}}
+
+{
+  "verificationId": "{{verificationId}}",
+  "code": "000000"
+}
+
+###############################################
+### 4. Register New User
+###############################################
+
+### Complete registration
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "verificationToken": "{{verificationToken}}",
+  "password": "SecurePass123!",
+  "email": "john.doe@example.com",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+###
+# Extract tokens from response
+@accessToken = {{register.response.body.tokens.accessToken}}
+@refreshToken = {{register.response.body.tokens.refreshToken}}
+
+### Register with weak password (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "verificationToken": "{{verificationToken}}",
+  "password": "weak"
+}
+
+###############################################
+### 5. Login
+###############################################
+
+### Login with valid credentials
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155551234",
+  "password": "SecurePass123!"
+}
+
+###
+# Extract tokens from login response
+@accessToken = {{login.response.body.tokens.accessToken}}
+@refreshToken = {{login.response.body.tokens.refreshToken}}
+
+### Login with invalid password
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155551234",
+  "password": "WrongPassword123!"
+}
+
+### Login with non-existent user
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155550000",
+  "password": "SomePass123!"
+}
+
+###############################################
+### 6. Refresh Access Token
+###############################################
+
+### Refresh token
+# @name refresh
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+# Extract new tokens
+@accessToken = {{refresh.response.body.accessToken}}
+@refreshToken = {{refresh.response.body.refreshToken}}
+
+### Refresh with invalid token
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "invalid-token-here"
+}
+
+###############################################
+### 7. Logout
+###############################################
+
+### Logout (invalidate refresh token)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout without access token (should fail)
+POST {{baseUrl}}/auth/logout
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###############################################
+### 8. Forgot Password
+###############################################
+
+### Request password reset
+# @name forgotPassword
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155551234"
+}
+
+###
+# Extract resetId from response
+@resetId = {{forgotPassword.response.body.resetId}}
+
+### Request reset for non-existent user
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155550000"
+}
+
+###############################################
+### 9. Reset Password
+###############################################
+
+### Reset password with code
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "resetId": "{{resetId}}",
+  "code": "123456",
+  "newPassword": "NewSecurePass123!"
+}
+
+### Reset with invalid code
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "resetId": "{{resetId}}",
+  "code": "000000",
+  "newPassword": "NewSecurePass123!"
+}
+
+###############################################
+### Complete Registration Flow Example
+###############################################
+
+### Step 1: Check phone
+# @name flow1
+POST {{baseUrl}}/auth/check-phone
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155552222"
+}
+
+###
+
+### Step 2: Send verification code
+# @name flow2
+POST {{baseUrl}}/auth/send-verification-code
+Content-Type: {{contentType}}
+
+{
+  "phone": "+14155552222",
+  "purpose": "registration"
+}
+
+###
+
+### Step 3: Verify code (get code from SMS or logs)
+# @name flow3
+POST {{baseUrl}}/auth/verify-code
+Content-Type: {{contentType}}
+
+{
+  "verificationId": "{{flow2.response.body.verificationId}}",
+  "code": "REPLACE_WITH_ACTUAL_CODE"
+}
+
+###
+
+### Step 4: Complete registration
+# @name flow4
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "verificationToken": "{{flow3.response.body.verificationToken}}",
+  "password": "MySecurePass123!",
+  "email": "newuser@example.com",
+  "firstName": "Jane",
+  "lastName": "Smith"
+}
+
+###
+
+### Step 5: Use the access token
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{flow4.response.body.tokens.accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{flow4.response.body.tokens.refreshToken}}"
+}
+
+###############################################
+### Error Testing
+###############################################
+
+### Invalid phone format
+POST {{baseUrl}}/auth/check-phone
+Content-Type: {{contentType}}
+
+{
+  "phone": "invalid-phone"
+}
+
+### Non-US phone number
+POST {{baseUrl}}/auth/check-phone
+Content-Type: {{contentType}}
+
+{
+  "phone": "+447911123456"
+}
+
+### Missing required fields
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "password": "SecurePass123!"
+}
+
+### Password too short
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "verificationToken": "some-token",
+  "password": "short"
+}
+
