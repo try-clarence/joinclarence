@@ -6,14 +6,20 @@ import { Twilio } from 'twilio';
 export class SmsService {
   private client: Twilio;
   private fromNumber: string;
+  private readonly mockMode: boolean;
   private readonly logger = new Logger(SmsService.name);
 
   constructor(private configService: ConfigService) {
     const accountSid = this.configService.get('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get('TWILIO_AUTH_TOKEN');
     this.fromNumber = this.configService.get('TWILIO_PHONE_NUMBER');
+    this.mockMode = this.configService.get('SMS_MOCK_MODE') === 'true';
 
-    if (accountSid && authToken) {
+    if (this.mockMode) {
+      this.logger.warn(
+        '🔧 SMS MOCK MODE ENABLED - All SMS will be logged instead of sent. Use OTP: 111111',
+      );
+    } else if (accountSid && authToken) {
       this.client = new Twilio(accountSid, authToken);
     } else {
       this.logger.warn(
@@ -34,6 +40,14 @@ export class SmsService {
 
   private async sendSms(to: string, body: string): Promise<void> {
     try {
+      // Mock mode - just log the SMS
+      if (this.mockMode) {
+        this.logger.log(`📱 [MOCK SMS] To: ${to}`);
+        this.logger.log(`📱 [MOCK SMS] Message: ${body}`);
+        this.logger.log(`📱 [MOCK SMS] Use hardcoded OTP: 111111`);
+        return;
+      }
+
       if (!this.client) {
         this.logger.warn(`SMS would be sent to ${to}: ${body}`);
         return;
