@@ -395,6 +395,11 @@ export class AuthService {
   }
 
   private generateCode(): string {
+    // Use hardcoded OTP in mock mode for local development
+    const mockMode = this.configService.get('SMS_MOCK_MODE') === 'true';
+    if (mockMode) {
+      return '111111';
+    }
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 

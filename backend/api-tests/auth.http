@@ -1,4 +1,8 @@
 ### Clarence AI Backend - Authentication API Tests
+### 
+### 🔧 SMS MOCK MODE: When SMS_MOCK_MODE=true in .env
+### Always use OTP: 111111 for all verification codes
+###
 ### Base URL
 @baseUrl = http://localhost:3000/api/v1
 @contentType = application/json
@@ -52,19 +56,20 @@ Content-Type: {{contentType}}
 ### 3. Verify Code
 ###############################################
 
-### Verify SMS code
+### Verify SMS code (Use 111111 in mock mode)
 # @name verifyCode
 POST {{baseUrl}}/auth/verify-code
 Content-Type: {{contentType}}
 
 {
   "verificationId": "{{verificationId}}",
-  "code": "123456"
+  "code": "111111"
 }
 
 ###
 # Extract verificationToken from response
-@verificationToken = {{verifyCode.response.body.verificationToken}}
+# @verificationToken = {{verifyCode.response.body.verificationToken}}
+@verificationToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInB1cnBvc2UiOiJyZWdpc3RyYXRpb24iLCJ0eXBlIjoidmVyaWZpY2F0aW9uIiwiaWF0IjoxNzYyNzc0MjgxLCJleHAiOjE3NjI3NzUxODF9.AQeFkHLqAubiUUu8-UhXWur6RjbGyF5dufHrBXXsuIs
 
 ### Test with invalid code
 POST {{baseUrl}}/auth/verify-code
@@ -94,8 +99,10 @@ Content-Type: {{contentType}}
 
 ###
 # Extract tokens from response
-@accessToken = {{register.response.body.tokens.accessToken}}
+# @accessToken = {{register.response.body.tokens.accessToken}}
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYWJlMTUxMC02OThkLTQ3Y2ItOGNlMi1mZWExMjlkZGQ4ZGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NjI3NzQ0MTEsImV4cCI6MTc2Mjc3NTMxMX0.xGp_oujLS8hH17-1l503DIJCbKqjjg0wObIL40QCH_k
 @refreshToken = {{register.response.body.tokens.refreshToken}}
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYWJlMTUxMC02OThkLTQ3Y2ItOGNlMi1mZWExMjlkZGQ4ZGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJyZWZyZXNoIiwianRpIjoiODQyYTgxOWQtMGIwNi00MjQ4LTk0MTMtNTkzOWNmODVkNGI3IiwiaWF0IjoxNzYyNzc0NDExLCJleHAiOjE3NjMzNzkyMTF9.0aKHThaTTAIg2lSrmi6WktaWMtseALRngsd7u25aETg
 
 ### Register with weak password (should fail)
 POST {{baseUrl}}/auth/register
@@ -219,13 +226,13 @@ Content-Type: {{contentType}}
 ### 9. Reset Password
 ###############################################
 
-### Reset password with code
+### Reset password with code (Use 111111 in mock mode)
 POST {{baseUrl}}/auth/reset-password
 Content-Type: {{contentType}}
 
 {
   "resetId": "{{resetId}}",
-  "code": "123456",
+  "code": "111111",
   "newPassword": "NewSecurePass123!"
 }
 
@@ -266,14 +273,14 @@ Content-Type: {{contentType}}
 
 ###
 
-### Step 3: Verify code (get code from SMS or logs)
+### Step 3: Verify code (Use 111111 in mock mode, or get from SMS/logs in real mode)
 # @name flow3
 POST {{baseUrl}}/auth/verify-code
 Content-Type: {{contentType}}
 
 {
   "verificationId": "{{flow2.response.body.verificationId}}",
-  "code": "REPLACE_WITH_ACTUAL_CODE"
+  "code": "111111"
 }
 
 ###
