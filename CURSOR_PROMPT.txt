@@ -1,0 +1,278 @@
+# COPY-PASTE PROMPT FOR CURSOR/CLAUDE AI
+
+===================================
+START COPYING FROM HERE ↓
+===================================
+
+I need you to build a complete Next.js 15 (App Router) insurance platform called "Clarence" based on the detailed UI specifications in @UI_SCREEN_SPECIFICATIONS.md.
+
+## PROJECT OVERVIEW
+- **Name:** Clarence Insurance Platform
+- **Type:** Insurance quote aggregation and policy management
+- **Screens:** 26+ screens across public and authenticated areas
+- **Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Zustand, React Query
+
+## DETAILED SPECS
+Read @UI_SCREEN_SPECIFICATIONS.md for complete specifications. It contains:
+- Design system (colors, typography, spacing) - Lines 17-135
+- All 26+ screen layouts with ASCII wireframes
+- Interactive elements and behaviors
+- Form validation rules
+- Responsive design requirements
+- Accessibility requirements (WCAG 2.1 AA)
+
+## ALL SCREENS TO BUILD
+
+### Public (Unauthenticated)
+1. Landing Page - `/` (Lines 138-209)
+2. Quote Request Step 1 - `/quote/step-1` (Lines 213-258)
+3. Quote Request Step 2 - `/quote/step-2` (Lines 260-329)
+4. Quote Request Step 3 - `/quote/step-3` (Lines 331-382)
+5. Quote Request Step 4 - `/quote/step-4` (Lines 385-427)
+6. Quote Request Step 5 - `/quote/step-5` (Lines 430-490)
+7. Registration - `/register` (Lines 493-567)
+8. Login - `/login`
+
+### Authenticated
+9. Dashboard - `/dashboard` (Lines 570-660)
+10. My Quotes List - `/quotes` (Lines 1004-1073)
+11. Quote Detail - `/quotes/[id]` (Lines 1075-1121)
+12. Quote Comparison - `/quotes/compare` (Lines 664-752)
+13. My Policies List - `/policies` (Lines 1135-1205)
+14. Policy Detail - `/policies/[id]` (Lines 1207-1296)
+15. COI Generator - `/policies/[id]/certificate` (Lines 1298-1343)
+16. Documents - `/documents` (Lines 1356-1446)
+17. Chat - `/chat` (Lines 916-999)
+18. Settings Profile - `/settings/profile` (Lines 1450-1510)
+19. Settings Security - `/settings/security` (Lines 1512-1569)
+20. Settings Notifications - `/settings/notifications` (Lines 1571-1630)
+21. Settings Billing - `/settings/billing` (Lines 1632-1692)
+22. Help Center - `/help` (Lines 1706-1787)
+23. Help Article - `/help/articles/[slug]` (Lines 1789-1847)
+
+### Purchase Flow
+24. Payment - `/purchase/payment` (Lines 758-821)
+25. Review & Sign - `/purchase/review` (Lines 823-877)
+26. Success - `/purchase/success` (Lines 879-912)
+
+## TECH REQUIREMENTS
+
+**Core:**
+- Next.js 15 with App Router (TypeScript strict mode)
+- React 18+ with Server Components
+
+**Styling:**
+- Tailwind CSS 4
+- shadcn/ui components
+- Framer Motion for animations
+- Lucide React icons
+- Design system from spec (Lines 17-135)
+
+**State & Data:**
+- Zustand (client state)
+- React Query (server state)
+- Zod (validation)
+- React Hook Form
+
+**Auth & Security:**
+- NextAuth.js v5
+- Phone verification (SMS mock initially)
+- JWT with refresh tokens
+
+**Other:**
+- Stripe for payments (test mode)
+- uploadthing for file uploads
+- react-pdf for document viewing
+- signature_pad for e-signatures
+
+## PROJECT STRUCTURE
+```
+app/
+├── (public)/
+│   ├── page.tsx                    # Landing
+│   ├── quote/step-[1-5]/page.tsx  # Quote flow
+│   └── register/page.tsx
+├── (authenticated)/
+│   ├── dashboard/page.tsx
+│   ├── quotes/
+│   ├── policies/
+│   ├── documents/page.tsx
+│   ├── chat/page.tsx
+│   ├── settings/[tab]/page.tsx
+│   └── help/
+├── purchase/
+│   ├── payment/page.tsx
+│   ├── review/page.tsx
+│   └── success/page.tsx
+└── api/
+    ├── auth/[...nextauth]/
+    ├── quotes/
+    ├── policies/
+    └── chat/
+
+components/
+├── ui/          # shadcn components
+├── layout/      # Header, Footer, Sidebar
+├── forms/       # Quote, Registration, Payment
+├── quote/       # Quote cards, comparison
+├── policy/      # Policy cards, COI
+├── chat/        # Chat widget, messages
+└── shared/      # Common components
+
+lib/
+├── auth.ts
+├── api.ts
+├── validators.ts
+└── constants.ts
+```
+
+## DESIGN SYSTEM COLORS
+```css
+--primary-blue: #0066FF;
+--neutral-900: #1A1A1A;
+--neutral-700: #4A4A4A;
+--success-green: #10B981;
+--error-red: #EF4444;
+--warning-yellow: #F59E0B;
+```
+
+Full design system in spec lines 17-135.
+
+## KEY FEATURES
+
+**Quote Flow:**
+- 5-step progressive form
+- File upload with AI extraction (mock)
+- Form validation with error states
+- Progress bar
+- Save to localStorage
+
+**Dashboard:**
+- Two states: in-progress vs quotes-ready
+- Progress indicator
+- Quick actions
+- Sidebar navigation
+
+**Quote Comparison:**
+- Side-by-side comparison (up to 3)
+- Filter and sort
+- Select for purchase
+
+**Policy Management:**
+- List with status badges
+- Detail with tabs
+- COI generator modal
+- Document management
+
+**Purchase Flow:**
+- Stripe integration
+- Payment plans
+- E-signature
+- Success confirmation
+
+**Chat:**
+- AI assistant (Clarence)
+- Widget available globally
+- Inline actions
+- Message history
+
+**Settings:**
+- 4 tabs (Profile, Security, Notifications, Billing)
+- 2FA setup
+- Payment methods
+- Active sessions
+
+## RESPONSIVE DESIGN
+- Mobile: 320px-767px (single column, hamburger menu)
+- Tablet: 768px-1023px (collapsible sidebar)
+- Desktop: 1024px+ (full layout)
+
+## ACCESSIBILITY
+- WCAG 2.1 AA compliant
+- Keyboard navigation
+- ARIA labels
+- Focus indicators
+- Color contrast 4.5:1
+
+## IMPLEMENTATION PHASES
+
+**Phase 1:** Setup + Design System + Auth (Week 1)
+**Phase 2:** Public Screens (Landing + Quote Flow) (Week 2)
+**Phase 3:** Dashboard + Quotes (Week 3)
+**Phase 4:** Policies + Documents (Week 4)
+**Phase 5:** Purchase Flow (Week 5)
+**Phase 6:** Settings + Help + Chat (Week 6)
+**Phase 7:** Polish + Testing (Week 7)
+
+## DATA MODELS
+
+**Quote:**
+- id, userId, status (in_progress|ready|action_required|expired)
+- businessInfo (name, industry, address, employees, revenue)
+- contactInfo (name, email, phone)
+- coverageTypes[]
+- quotes[] (carrier, pricing, limits)
+- timestamps
+
+**Policy:**
+- id, userId, policyNumber, carrier
+- status (active|expiring_soon|expired)
+- effectiveDate, expirationDate
+- premium (annual, plan, paymentAmount)
+- limits, documents[]
+
+**User:**
+- id, email, phone, phoneVerified
+- businessInfo, personalInfo
+- settings (notifications, billing)
+
+## API ROUTES
+- POST /api/auth/register, login, verify-phone
+- GET/POST /api/quotes, /api/quotes/[id]
+- GET/POST /api/policies, /api/policies/[id]
+- POST /api/documents/upload
+- POST /api/chat
+- POST /api/payment/create-intent
+
+## MOCK DATA
+Use mock data initially:
+- 4 carriers: Reliable, TechShield, Premier, FastBind
+- Various quote options with pricing
+- Mock policies
+- Mock chat responses
+
+## QUALITY STANDARDS
+✅ TypeScript strict mode
+✅ Component composition
+✅ Proper error boundaries
+✅ Loading/error/empty states
+✅ Server Components where possible
+✅ Image optimization
+✅ Code splitting
+✅ Accessibility compliant
+✅ Responsive design
+✅ Clean, documented code
+
+## START HERE
+
+1. Setup Next.js 15 project
+2. Install dependencies (see full list in @NEXTJS_BUILD_PROMPT.md)
+3. Setup shadcn/ui
+4. Implement design system
+5. Build landing page first
+6. Then quote flow (5 steps)
+7. Continue with authenticated screens
+
+**IMPORTANT:** Reference @UI_SCREEN_SPECIFICATIONS.md for exact layouts, component specifications, and interactive behaviors. Every screen is fully documented with ASCII wireframes and detailed notes.
+
+Build each screen pixel-perfect to specs. Focus on quality, reusability, and maintainability.
+
+===================================
+END COPYING HERE ↑
+===================================
+
+ADDITIONAL RESOURCES:
+- Full detailed prompt: See NEXTJS_BUILD_PROMPT.md
+- All screens inventory: See ALL_SCREENS_SUMMARY.md
+- UI specifications: See UI_SCREEN_SPECIFICATIONS.md (lines noted in each screen)
+
