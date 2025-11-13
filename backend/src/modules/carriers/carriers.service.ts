@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { Carrier, CarrierHealthStatus } from './entities/carrier.entity';
-import { CarrierQuote, CarrierQuoteStatus } from './entities/carrier-quote.entity';
+import {
+  CarrierQuote,
+  CarrierQuoteStatus,
+} from './entities/carrier-quote.entity';
 import { CarrierQuoteRequestDto } from './dto/quote-request.dto';
 
 interface CarrierApiQuoteResponse {
@@ -114,10 +117,7 @@ export class CarriersService {
     }
 
     if (!carrier.isActive) {
-      throw new HttpException(
-        'Carrier is not active',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Carrier is not active', HttpStatus.BAD_REQUEST);
     }
 
     this.logger.log(
@@ -193,7 +193,9 @@ export class CarriersService {
       };
 
       this.logger.debug(`Calling carrier API: POST ${url}`);
-      this.logger.debug(`Request payload: ${JSON.stringify(apiRequest, null, 2)}`);
+      this.logger.debug(
+        `Request payload: ${JSON.stringify(apiRequest, null, 2)}`,
+      );
 
       const response = await firstValueFrom(
         this.httpService.post<CarrierApiQuoteResponse>(url, apiRequest, {
@@ -206,9 +208,10 @@ export class CarriersService {
 
       // Carrier API returns quotes array, extract the first quote for this coverage type
       const responseData: any = apiResponse;
-      const quoteData = responseData.quotes && responseData.quotes.length > 0 
-        ? responseData.quotes[0] 
-        : null;
+      const quoteData =
+        responseData.quotes && responseData.quotes.length > 0
+          ? responseData.quotes[0]
+          : null;
 
       if (!quoteData) {
         throw new Error('No quote data returned from carrier');
@@ -247,7 +250,8 @@ export class CarriersService {
         underwritingNotes: quoteData.underwriting_notes,
         declineReason: quoteData.decline_reason,
         declineCode: quoteData.decline_code,
-        packageDiscountPercentage: responseData.package_discount?.percentage || null,
+        packageDiscountPercentage:
+          responseData.package_discount?.percentage || null,
         packageDiscountAmount: responseData.package_discount?.amount || null,
         validUntil: new Date(responseData.valid_until),
         generatedViaLlm: false,
@@ -257,7 +261,9 @@ export class CarriersService {
 
       return this.carrierQuotesRepository.save(quote);
     } catch (error) {
-      const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      const errorDetails = error.response?.data
+        ? JSON.stringify(error.response.data)
+        : error.message;
       this.logger.error(
         `Failed to get quote from ${carrier.carrierCode} for ${coverageType}:\n${errorDetails}`,
       );
@@ -327,10 +333,7 @@ export class CarriersService {
     }
 
     if (quote.status !== CarrierQuoteStatus.QUOTED) {
-      throw new HttpException(
-        'Quote cannot be bound',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Quote cannot be bound', HttpStatus.BAD_REQUEST);
     }
 
     // Check if quote is still valid
@@ -407,11 +410,19 @@ export class CarriersService {
         status: policyData.status === 'bound' ? 'bound' : 'pending',
         effective_date: policyData.effective_date,
         expiration_date: policyData.expiration_date,
-        policy_documents: policyData.documents ? {
-          policy_url: policyData.documents.find((d: any) => d.type === 'policy')?.url,
-          declarations_url: policyData.documents.find((d: any) => d.type === 'declarations')?.url,
-          certificate_url: policyData.documents.find((d: any) => d.type === 'certificate')?.url,
-        } : {},
+        policy_documents: policyData.documents
+          ? {
+              policy_url: policyData.documents.find(
+                (d: any) => d.type === 'policy',
+              )?.url,
+              declarations_url: policyData.documents.find(
+                (d: any) => d.type === 'declarations',
+              )?.url,
+              certificate_url: policyData.documents.find(
+                (d: any) => d.type === 'certificate',
+              )?.url,
+            }
+          : {},
         carrier_contact: policyData.carrier_contact || {},
       };
 
@@ -502,7 +513,8 @@ export class CarriersService {
         financial_info: {
           annual_revenue: Number(requestData.financialInfo.revenue2024) || 0,
           annual_payroll: Number(requestData.financialInfo.totalPayroll) || 0,
-          full_time_employees: Number(requestData.financialInfo.fullTimeEmployees) || 0,
+          full_time_employees:
+            Number(requestData.financialInfo.fullTimeEmployees) || 0,
         },
         contact_info: {
           first_name: requestData.contact.firstName,
@@ -515,7 +527,8 @@ export class CarriersService {
         {
           coverage_type: coverageType,
           requested_limits: this.getDefaultLimitsForCoverage(coverageType),
-          requested_deductible: this.getDefaultDeductibleForCoverage(coverageType),
+          requested_deductible:
+            this.getDefaultDeductibleForCoverage(coverageType),
           effective_date: effectiveDateStr,
         },
       ],
@@ -558,7 +571,9 @@ export class CarriersService {
       },
     };
 
-    return limitsMap[coverageType] || { per_occurrence: 1000000, aggregate: 2000000 };
+    return (
+      limitsMap[coverageType] || { per_occurrence: 1000000, aggregate: 2000000 }
+    );
   }
 
   /**

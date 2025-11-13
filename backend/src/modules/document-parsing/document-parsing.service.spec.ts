@@ -6,8 +6,6 @@ import { FileStorageService } from '../file-storage/file-storage.service';
 
 describe('DocumentParsingService', () => {
   let service: DocumentParsingService;
-  let fileStorageService: FileStorageService;
-  let configService: ConfigService;
 
   const mockFileStorageService = {
     uploadFile: jest.fn(),
@@ -33,8 +31,6 @@ describe('DocumentParsingService', () => {
     }).compile();
 
     service = module.get<DocumentParsingService>(DocumentParsingService);
-    fileStorageService = module.get<FileStorageService>(FileStorageService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -76,7 +72,7 @@ describe('DocumentParsingService', () => {
       expect(result.metadata.confidence).toBeGreaterThanOrEqual(0);
       expect(result.metadata.confidence).toBeLessThanOrEqual(1);
       expect(result.metadata.fileUrl).toBe('https://s3.amazonaws.com/test-key');
-      
+
       // Check for expected fields
       expect(result).toHaveProperty('legalBusinessName');
       expect(result).toHaveProperty('businessAddress');
@@ -140,4 +136,3 @@ describe('DocumentParsingService', () => {
     });
   });
 });
-

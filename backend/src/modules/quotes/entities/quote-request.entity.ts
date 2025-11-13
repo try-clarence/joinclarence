@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
@@ -150,16 +149,40 @@ export class QuoteRequest {
   contactPhone: string;
 
   // Step 3: Financial Information
-  @Column({ name: 'revenue_2024', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'revenue_2024',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   revenue2024: number;
 
-  @Column({ name: 'expenses_2024', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'expenses_2024',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   expenses2024: number;
 
-  @Column({ name: 'revenue_2025_estimate', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'revenue_2025_estimate',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   revenue2025Estimate: number;
 
-  @Column({ name: 'expenses_2025_estimate', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'expenses_2025_estimate',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   expenses2025Estimate: number;
 
   @Column({ name: 'full_time_employees', type: 'int', nullable: true })
@@ -168,10 +191,22 @@ export class QuoteRequest {
   @Column({ name: 'part_time_employees', type: 'int', nullable: true })
   partTimeEmployees: number;
 
-  @Column({ name: 'total_payroll', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'total_payroll',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   totalPayroll: number;
 
-  @Column({ name: 'contractor_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'contractor_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   contractorPercentage: number;
 
   // Step 5: Final Details
@@ -195,7 +230,11 @@ export class QuoteRequest {
   @Column({ name: 'quotes_ready_at', type: 'timestamp', nullable: true })
   quotesReadyAt: Date;
 
-  @Column({ name: 'estimated_completion_time', type: 'timestamp', nullable: true })
+  @Column({
+    name: 'estimated_completion_time',
+    type: 'timestamp',
+    nullable: true,
+  })
   estimatedCompletionTime: Date;
 
   @CreateDateColumn({ name: 'created_at' })

@@ -8,7 +8,7 @@
 @contentType = application/json
 
 ### Variables (will be set from responses)
-@verificationId = 
+@verificationId = 33b04a12-8c3a-4375-b99b-ab2f2c09e5e0
 @verificationToken = 
 @accessToken = 
 @refreshToken = 
@@ -69,7 +69,7 @@ Content-Type: {{contentType}}
 ###
 # Extract verificationToken from response
 # @verificationToken = {{verifyCode.response.body.verificationToken}}
-@verificationToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInB1cnBvc2UiOiJyZWdpc3RyYXRpb24iLCJ0eXBlIjoidmVyaWZpY2F0aW9uIiwiaWF0IjoxNzYyNzc0MjgxLCJleHAiOjE3NjI3NzUxODF9.AQeFkHLqAubiUUu8-UhXWur6RjbGyF5dufHrBXXsuIs
+@verificationToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInB1cnBvc2UiOiJyZWdpc3RyYXRpb24iLCJ0eXBlIjoidmVyaWZpY2F0aW9uIiwiaWF0IjoxNzYzMDI4OTQyLCJleHAiOjE3NjMwMjk4NDJ9.J6U_hyV_lek4n8jNlFpnLRQ00ImPLBdrlODWzUpj1PM
 
 ### Test with invalid code
 POST {{baseUrl}}/auth/verify-code
@@ -100,9 +100,9 @@ Content-Type: {{contentType}}
 ###
 # Extract tokens from response
 # @accessToken = {{register.response.body.tokens.accessToken}}
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYWJlMTUxMC02OThkLTQ3Y2ItOGNlMi1mZWExMjlkZGQ4ZGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NjI3NzQ0MTEsImV4cCI6MTc2Mjc3NTMxMX0.xGp_oujLS8hH17-1l503DIJCbKqjjg0wObIL40QCH_k
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODdhNmJhYS02YWVjLTQ2NWYtYmE1Ny1iNDVjNDQwNmY4NGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NjMwMjkwMjcsImV4cCI6MTc2MzAyOTkyN30.NLC0Usa8CZ0vYBBgiQ4qTfe-Ad2BJWa57jYrx0U5BB0
 @refreshToken = {{register.response.body.tokens.refreshToken}}
-@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmYWJlMTUxMC02OThkLTQ3Y2ItOGNlMi1mZWExMjlkZGQ4ZGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJyZWZyZXNoIiwianRpIjoiODQyYTgxOWQtMGIwNi00MjQ4LTk0MTMtNTkzOWNmODVkNGI3IiwiaWF0IjoxNzYyNzc0NDExLCJleHAiOjE3NjMzNzkyMTF9.0aKHThaTTAIg2lSrmi6WktaWMtseALRngsd7u25aETg
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODdhNmJhYS02YWVjLTQ2NWYtYmE1Ny1iNDVjNDQwNmY4NGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJyZWZyZXNoIiwianRpIjoiZjRmMjgxMDQtYjBhZi00MWYyLWI4MjgtZmZmMmJkY2MwZmI4IiwiaWF0IjoxNzYzMDI5MDI3LCJleHAiOjE3NjM2MzM4Mjd9.-JzVW1ma--qkIiDD6hxk5qDjVPnUYBgeIoQHkVLLDp8
 
 ### Register with weak password (should fail)
 POST {{baseUrl}}/auth/register
@@ -129,8 +129,9 @@ Content-Type: {{contentType}}
 
 ###
 # Extract tokens from login response
-@accessToken = {{login.response.body.tokens.accessToken}}
-@refreshToken = {{login.response.body.tokens.refreshToken}}
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODdhNmJhYS02YWVjLTQ2NWYtYmE1Ny1iNDVjNDQwNmY4NGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NjMwMjkxMDUsImV4cCI6MTc2MzAzMDAwNX0.gVhmhuc3qzAcic5V6c-n-KTi0wMpMseZy0IcOAHMm_E
+
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODdhNmJhYS02YWVjLTQ2NWYtYmE1Ny1iNDVjNDQwNmY4NGEiLCJwaG9uZSI6IisxNDE1NTU1MTIzNCIsInR5cGUiOiJyZWZyZXNoIiwianRpIjoiZGU4NDkxMzEtMTdiNy00ZWZkLTg1ZTMtYWViZDQ0MzY4ZDViIiwiaWF0IjoxNzYzMDI5MTA1LCJleHAiOjE3NjM2MzM5MDV9.5bakWGAvuxuFH7rWe8m5ns_e1MWjEhuUEbXuzkaV4sA
 
 ### Login with invalid password
 POST {{baseUrl}}/auth/login

@@ -27,7 +27,9 @@ export class ParseDecPageResponseDto {
   @ApiPropertyOptional()
   doingBusinessAs?: string;
 
-  @ApiPropertyOptional({ enum: ['llc', 'corporation', 'partnership', 'sole-proprietorship'] })
+  @ApiPropertyOptional({
+    enum: ['llc', 'corporation', 'partnership', 'sole-proprietorship'],
+  })
   legalStructure?: string;
 
   @ApiPropertyOptional()
@@ -111,4 +113,3 @@ export class ParseDecPageResponseDto {
   @ApiProperty()
   metadata: MetadataDto;
 }
-

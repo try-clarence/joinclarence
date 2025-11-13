@@ -24,9 +24,7 @@ describe('Carriers E2E Tests', () => {
     dataSource = moduleFixture.get<DataSource>(DataSource);
 
     // Get a carrier ID for testing
-    const carriers = await dataSource.query(
-      'SELECT id FROM carriers LIMIT 1',
-    );
+    const carriers = await dataSource.query('SELECT id FROM carriers LIMIT 1');
     carrierId = carriers[0]?.id;
   });
 

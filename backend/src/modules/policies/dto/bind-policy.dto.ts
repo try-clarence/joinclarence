@@ -1,4 +1,10 @@
-import { IsUUID, IsEnum, IsOptional, IsString, IsBoolean } from 'class-validator';
+import {
+  IsUUID,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsBoolean,
+} from 'class-validator';
 
 export enum PaymentPlan {
   ANNUAL = 'annual',

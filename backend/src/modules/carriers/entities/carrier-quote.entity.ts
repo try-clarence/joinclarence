@@ -56,16 +56,40 @@ export class CarrierQuote {
   insuranceType: string;
 
   // Premium
-  @Column({ name: 'annual_premium', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'annual_premium',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   annualPremium: number;
 
-  @Column({ name: 'monthly_premium', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'monthly_premium',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   monthlyPremium: number;
 
-  @Column({ name: 'quarterly_premium', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'quarterly_premium',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   quarterlyPremium: number;
 
-  @Column({ name: 'payment_in_full_discount', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'payment_in_full_discount',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   paymentInFullDiscount: number;
 
   // Coverage Details
@@ -105,10 +129,22 @@ export class CarrierQuote {
   declineCode: string;
 
   // Package Discount
-  @Column({ name: 'package_discount_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'package_discount_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   packageDiscountPercentage: number;
 
-  @Column({ name: 'package_discount_amount', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'package_discount_amount',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   packageDiscountAmount: number;
 
   // Validity

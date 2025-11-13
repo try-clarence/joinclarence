@@ -1,10 +1,16 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { QuoteRequest, QuoteRequestStatus } from './entities/quote-request.entity';
+import {
+  QuoteRequest,
+  QuoteRequestStatus,
+} from './entities/quote-request.entity';
 import { QuoteRequestCoverage } from './entities/quote-request-coverage.entity';
 import { CarriersService } from '../carriers/carriers.service';
-import { CreateQuoteRequestDto, SelectCoveragesDto } from './dto/create-quote-request.dto';
+import {
+  CreateQuoteRequestDto,
+  SelectCoveragesDto,
+} from './dto/create-quote-request.dto';
 import { CarrierQuoteRequestDto } from '../carriers/dto/quote-request.dto';
 
 @Injectable()
@@ -114,10 +120,7 @@ export class QuotesService {
     });
 
     if (coverages.length === 0) {
-      throw new HttpException(
-        'No coverages selected',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('No coverages selected', HttpStatus.BAD_REQUEST);
     }
 
     // Update status
@@ -239,9 +242,8 @@ export class QuotesService {
     });
 
     // Get quotes
-    const quotes = await this.carriersService.getQuotesForRequest(
-      quoteRequestId,
-    );
+    const quotes =
+      await this.carriersService.getQuotesForRequest(quoteRequestId);
 
     return {
       quoteRequest,

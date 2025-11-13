@@ -1,20 +1,9 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Put,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param } from '@nestjs/common';
 import { QuotesService } from './quotes.service';
 import {
   CreateQuoteRequestDto,
   SelectCoveragesDto,
-  SubmitQuoteRequestDto,
 } from './dto/create-quote-request.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('quotes')
 export class QuotesController {
@@ -24,7 +13,9 @@ export class QuotesController {
    * Create a new quote request (Step 1)
    */
   @Post()
-  async createQuoteRequest(@Body() createQuoteRequestDto: CreateQuoteRequestDto) {
+  async createQuoteRequest(
+    @Body() createQuoteRequestDto: CreateQuoteRequestDto,
+  ) {
     return this.quotesService.createQuoteRequest(createQuoteRequestDto);
   }
 

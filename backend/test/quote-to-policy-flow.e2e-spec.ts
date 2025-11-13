@@ -66,8 +66,7 @@ describe('Quote to Policy Flow E2E Tests (with Real Carrier API Calls)', () => {
         businessWebsite: 'https://acmetech.com',
         industry: 'Technology Consulting',
         industryCode: '541512',
-        businessDescription:
-          'Software development and IT consulting services',
+        businessDescription: 'Software development and IT consulting services',
         fein: '12-3456789',
         yearStarted: 2020,
         yearsCurrentOwnership: 4,
@@ -97,7 +96,8 @@ describe('Quote to Policy Flow E2E Tests (with Real Carrier API Calls)', () => {
         contactPhone: '+15551234567',
 
         // Step 5: Additional Comments
-        additionalComments: 'Looking for comprehensive coverage for tech startup',
+        additionalComments:
+          'Looking for comprehensive coverage for tech startup',
       };
 
       const response = await request(app.getHttpServer())
@@ -248,7 +248,9 @@ describe('Quote to Policy Flow E2E Tests (with Real Carrier API Calls)', () => {
       // Store a quote ID for binding
       carrierQuoteId = response.body.quotes[0].id;
 
-      console.log(`\n✅ Received ${response.body.quotes.length} quotes from carriers:`);
+      console.log(
+        `\n✅ Received ${response.body.quotes.length} quotes from carriers:`,
+      );
       response.body.quotes.forEach((q: any) => {
         console.log(
           `  - ${q.carrier.carrierName}: ${q.coverageType} - $${q.annualPremium}/year`,
@@ -351,19 +353,17 @@ describe('Quote to Policy Flow E2E Tests (with Real Carrier API Calls)', () => {
       console.log('='.repeat(60));
       console.log(`Quote Request ID: ${quoteRequestId}`);
       console.log(`User ID: ${userId}`);
-      console.log(`Business: ${quoteResponse.body.quoteRequest.legalBusinessName}`);
+      console.log(
+        `Business: ${quoteResponse.body.quoteRequest.legalBusinessName}`,
+      );
       console.log(`\nQuotes Received: ${quoteResponse.body.quotes.length}`);
       console.log(
         `Carriers Responded: ${new Set(quoteResponse.body.quotes.map((q: any) => q.carrier.carrierName)).size}`,
       );
       console.log(`\nPolicies Bound: ${policyResponse.body.length}`);
       if (policyResponse.body.length > 0) {
-        console.log(
-          `Policy Number: ${policyResponse.body[0].policyNumber}`,
-        );
-        console.log(
-          `Annual Premium: $${policyResponse.body[0].annualPremium}`,
-        );
+        console.log(`Policy Number: ${policyResponse.body[0].policyNumber}`);
+        console.log(`Annual Premium: $${policyResponse.body[0].annualPremium}`);
       }
       console.log('='.repeat(60) + '\n');
 

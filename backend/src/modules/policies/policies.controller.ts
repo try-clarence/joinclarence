@@ -72,10 +72,7 @@ export class PoliciesController {
    * Cancel a policy
    */
   @Delete(':id')
-  async cancelPolicy(
-    @Param('id') id: string,
-    @Body('reason') reason?: string,
-  ) {
+  async cancelPolicy(@Param('id') id: string, @Body('reason') reason?: string) {
     return this.policiesService.cancelPolicy(id, reason);
   }
 }

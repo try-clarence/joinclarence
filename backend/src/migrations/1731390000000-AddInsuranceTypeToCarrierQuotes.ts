@@ -19,4 +19,3 @@ export class AddInsuranceTypeToCarrierQuotes1731390000000
     `);
   }
 }
-

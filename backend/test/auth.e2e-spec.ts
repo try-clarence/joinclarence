@@ -445,4 +445,3 @@ describe('Auth API (e2e)', () => {
     });
   });
 });
-

@@ -100,7 +100,13 @@ export class Policy {
   })
   paymentPlan: PaymentPlan;
 
-  @Column({ name: 'monthly_amount', type: 'decimal', precision: 15, scale: 2, nullable: true })
+  @Column({
+    name: 'monthly_amount',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   monthlyAmount: number;
 
   // Dates

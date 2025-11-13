@@ -197,7 +197,9 @@ export class CreateCarrierIntegrationEntities1700000000000
     // Drop tables in reverse order
     await queryRunner.query(`DROP TABLE IF EXISTS policies CASCADE;`);
     await queryRunner.query(`DROP TABLE IF EXISTS carrier_quotes CASCADE;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS quote_request_coverages CASCADE;`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS quote_request_coverages CASCADE;`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS quote_requests CASCADE;`);
     await queryRunner.query(`DROP TABLE IF EXISTS carriers CASCADE;`);
   }

@@ -62,4 +62,3 @@ export class DocumentParsingController {
     return this.documentParsingService.parseDecPage(file);
   }
 }
-

@@ -27,24 +27,30 @@ describe('CarriersService', () => {
   };
 
   const mockCarrierQuoteResponse = {
-    quote_id: 'quote-123',
-    status: 'quoted',
-    coverage_type: 'general_liability',
-    pricing: {
-      annual_premium: 1200,
-      monthly_premium: 110,
-      quarterly_premium: 325,
-    },
-    coverage_limits: {
-      per_occurrence: 1000000,
-      aggregate: 2000000,
-    },
-    deductible: 500,
-    effective_date: '2025-12-01',
-    expiration_date: '2026-12-01',
-    highlights: ['Coverage for bodily injury'],
-    exclusions: ['Pollution'],
+    carrier_quote_id: 'carrier-quote-123',
+    quotes: [
+      {
+        quote_id: 'quote-123',
+        status: 'quoted',
+        coverage_type: 'general_liability',
+        premium: {
+          annual: 1200,
+          monthly: 110,
+          quarterly: 325,
+        },
+        coverage_limits: {
+          per_occurrence: 1000000,
+          aggregate: 2000000,
+        },
+        deductible: 500,
+        effective_date: '2025-12-01',
+        expiration_date: '2026-12-01',
+        highlights: ['Coverage for bodily injury'],
+        exclusions: ['Pollution'],
+      },
+    ],
     valid_until: '2025-12-15T00:00:00Z',
+    cached: false,
   };
 
   beforeEach(async () => {
@@ -276,9 +282,7 @@ describe('CarriersService', () => {
       // Second carrier fails
       (httpService.post as jest.Mock)
         .mockReturnValueOnce(of(axiosResponse))
-        .mockReturnValueOnce(
-          throwError(() => new Error('Carrier API error')),
-        );
+        .mockReturnValueOnce(throwError(() => new Error('Carrier API error')));
 
       const mockQuote = { id: 'quote-123' };
       carrierQuoteRepository.create.mockReturnValue(mockQuote);

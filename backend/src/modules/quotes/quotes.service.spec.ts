@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QuotesService } from './quotes.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { QuoteRequest, QuoteRequestStatus } from './entities/quote-request.entity';
+import {
+  QuoteRequest,
+  QuoteRequestStatus,
+} from './entities/quote-request.entity';
 import { QuoteRequestCoverage } from './entities/quote-request-coverage.entity';
 import { CarriersService } from '../carriers/carriers.service';
 

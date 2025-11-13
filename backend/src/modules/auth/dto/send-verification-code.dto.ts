@@ -14,7 +14,10 @@ export class SendVerificationCodeDto {
   })
   phone: string;
 
-  @ApiProperty({ enum: VerificationPurpose, default: VerificationPurpose.REGISTRATION })
+  @ApiProperty({
+    enum: VerificationPurpose,
+    default: VerificationPurpose.REGISTRATION,
+  })
   @IsEnum(VerificationPurpose)
   @IsOptional()
   purpose?: VerificationPurpose = VerificationPurpose.REGISTRATION;
@@ -30,4 +33,3 @@ export class SendVerificationCodeResponseDto {
   @ApiProperty()
   message: string;
 }
-

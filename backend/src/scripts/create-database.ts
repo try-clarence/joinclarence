@@ -21,7 +21,7 @@ async function createDatabase() {
     const dbName = process.env.DATABASE_NAME || 'clarence_db';
     const result = await client.query(
       `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
+      [dbName],
     );
 
     if (result.rows.length === 0) {

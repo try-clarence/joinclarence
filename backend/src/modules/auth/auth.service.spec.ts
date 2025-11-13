@@ -5,7 +5,6 @@ import {
   ConflictException,
   NotFoundException,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -21,7 +20,6 @@ describe('AuthService', () => {
   let usersService: UsersService;
   let redisService: RedisService;
   let smsService: SmsService;
-  let jwtService: JwtService;
 
   const mockUsersService = {
     findByPhone: jest.fn(),
@@ -94,7 +92,6 @@ describe('AuthService', () => {
     usersService = module.get<UsersService>(UsersService);
     redisService = module.get<RedisService>(RedisService);
     smsService = module.get<SmsService>(SmsService);
-    jwtService = module.get<JwtService>(JwtService);
   });
 
   afterEach(() => {
@@ -471,4 +468,3 @@ describe('AuthService', () => {
     });
   });
 });
-

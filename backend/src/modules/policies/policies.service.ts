@@ -59,7 +59,9 @@ export class PoliciesService {
       );
 
       if (bindResponse.status !== 'bound') {
-        this.logger.error(`Bind response status: ${bindResponse.status}, error: ${bindResponse.error_message}`);
+        this.logger.error(
+          `Bind response status: ${bindResponse.status}, error: ${bindResponse.error_message}`,
+        );
         throw new HttpException(
           bindResponse.error_message || 'Failed to bind policy',
           HttpStatus.BAD_REQUEST,
@@ -234,7 +236,9 @@ export class PoliciesService {
     policy.status = PolicyStatus.CANCELLED;
     policy.cancelledAt = new Date();
 
-    this.logger.log(`Policy ${policy.policyNumber} cancelled. Reason: ${reason}`);
+    this.logger.log(
+      `Policy ${policy.policyNumber} cancelled. Reason: ${reason}`,
+    );
 
     return this.policiesRepository.save(policy);
   }

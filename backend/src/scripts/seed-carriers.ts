@@ -1,6 +1,9 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { Carrier, CarrierHealthStatus } from '../modules/carriers/entities/carrier.entity';
+import {
+  Carrier,
+  CarrierHealthStatus,
+} from '../modules/carriers/entities/carrier.entity';
 
 config();
 
@@ -10,7 +13,8 @@ const carriers = [
     carrierName: 'Reliable Insurance Co.',
     specialization: 'General Liability, Professional Liability',
     isActive: true,
-    apiBaseUrl: process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
+    apiBaseUrl:
+      process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
     apiKeyEncrypted: process.env.CARRIER_API_KEY || 'test_clarence_key_123',
     supportsPersonal: true,
     supportsCommercial: true,
@@ -20,7 +24,7 @@ const carriers = [
       'workers_compensation',
       'commercial_auto',
       'cyber_liability',
-      'employment_practices_liability'
+      'employment_practices_liability',
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -29,7 +33,8 @@ const carriers = [
     carrierName: 'TechShield Underwriters',
     specialization: 'Technology E&O, Cyber Liability',
     isActive: true,
-    apiBaseUrl: process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
+    apiBaseUrl:
+      process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
     apiKeyEncrypted: process.env.CARRIER_API_KEY || 'test_clarence_key_123',
     supportsPersonal: true,
     supportsCommercial: true,
@@ -37,7 +42,7 @@ const carriers = [
       'professional_liability',
       'cyber_liability',
       'employment_practices_liability',
-      'directors_officers'
+      'directors_officers',
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -46,7 +51,8 @@ const carriers = [
     carrierName: 'Premier Underwriters Group',
     specialization: 'Full Commercial Lines',
     isActive: true,
-    apiBaseUrl: process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
+    apiBaseUrl:
+      process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
     apiKeyEncrypted: process.env.CARRIER_API_KEY || 'test_clarence_key_123',
     supportsPersonal: true,
     supportsCommercial: true,
@@ -58,7 +64,7 @@ const carriers = [
       'cyber_liability',
       'employment_practices_liability',
       'directors_officers',
-      'business_owners_policy'
+      'business_owners_policy',
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -67,14 +73,15 @@ const carriers = [
     carrierName: 'FastBind Insurance',
     specialization: 'Quick-bind small business policies',
     isActive: true,
-    apiBaseUrl: process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
+    apiBaseUrl:
+      process.env.CARRIER_API_BASE_URL || 'http://localhost:3001/api/v1',
     apiKeyEncrypted: process.env.CARRIER_API_KEY || 'test_clarence_key_123',
     supportsPersonal: true,
     supportsCommercial: true,
     supportedCoverages: [
       'general_liability',
       'professional_liability',
-      'business_owners_policy'
+      'business_owners_policy',
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -112,7 +119,9 @@ async function seedCarriers() {
     for (const carrierData of carriers) {
       const carrier = carrierRepository.create(carrierData);
       await carrierRepository.save(carrier);
-      console.log(`✓ Created carrier: ${carrierData.carrierName} (${carrierData.carrierCode})`);
+      console.log(
+        `✓ Created carrier: ${carrierData.carrierName} (${carrierData.carrierCode})`,
+      );
     }
 
     console.log(`\n✅ Successfully seeded ${carriers.length} carriers!`);
