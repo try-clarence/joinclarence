@@ -57,6 +57,8 @@ curl -X POST http://localhost:3000/api/v1/auth/login \
 ```
 api-tests/
 ├── auth.http                    # Authentication API tests
+├── carriers.http                # Carrier & carrier simulator API tests
+├── quotes.http                  # Quotes & policies API tests
 ├── document-parsing.http        # Document parsing API tests
 ├── test-files/                  # Sample files for testing
 │   └── sample-business.pdf      # Sample PDF for upload tests
@@ -88,7 +90,49 @@ api-tests/
 - ✅ Complete end-to-end flow examples
 - ✅ All 9 authentication endpoints covered
 
-### 2. `document-parsing.http` - Document Parsing API
+### 2. `carriers.http` - Carrier Integration & Simulator APIs
+
+**Carrier Simulator Tests (Port 3001):**
+- Health checks for all 4 carriers
+- Get commercial insurance quotes
+- Get personal insurance quotes
+- Multi-coverage quote requests
+- Policy binding
+- Certificate generation
+
+**Clarence Backend Carrier APIs (Port 3000):**
+- List all carriers
+- Check carrier health
+- Get carrier details
+
+**Features:**
+- ✅ Direct carrier simulator testing
+- ✅ All 4 carriers (Reliable, TechShield, Premier, FastBind)
+- ✅ Commercial and personal insurance examples
+- ✅ Complete API request formats per schema
+
+### 3. `quotes.http` - Quote & Policy Management APIs
+
+**Quote Request Flow:**
+- Create quote request (unauthenticated)
+- Select coverages
+- Link to user (after registration)
+- Submit for carrier quotes
+- View quotes from multiple carriers
+
+**Policy Management:**
+- Bind policy from quote
+- View user policies
+- Update policy settings
+- Cancel policy
+
+**Features:**
+- ✅ Complete quote-to-policy workflow
+- ✅ Multi-carrier quote comparison
+- ✅ Policy lifecycle management
+- ✅ Error case testing
+
+### 4. `document-parsing.http` - Document Parsing API
 
 **Upload & Parse:**
 - Upload PDF files
@@ -116,6 +160,44 @@ api-tests/
    ```
 
 3. Variables are automatically extracted and can be used in subsequent requests!
+
+### Testing Complete Quote-to-Policy Flow
+
+1. **Authenticate First** (in `auth.http`):
+   - Send verification code
+   - Register/Login
+   - Get accessToken and userId
+
+2. **Create Quote** (in `quotes.http`):
+   - Create quote request (#1) → Get quoteRequestId
+   - Select coverages (#4)
+   - Link to user (#6)
+
+3. **Submit to Carriers** (in `quotes.http`):
+   - Submit quote (#7) → Triggers carrier API calls
+   - Wait 10 seconds ⏰
+   - Get quotes (#9) → See quotes from 4 carriers
+
+4. **Bind Policy** (in `quotes.http`):
+   - Bind selected quote (#10)
+   - View policy (#11, #12)
+
+### Testing Carrier Simulator Directly
+
+1. Open `carriers.http`
+
+2. Test carrier health:
+   ```
+   GET /carriers/reliable_insurance/health
+   ```
+
+3. Request quote directly from carrier:
+   ```
+   POST /carriers/reliable_insurance/quote
+   (with full business info payload)
+   ```
+
+4. Compare response format with Clarence backend
 
 ### Testing Document Upload
 

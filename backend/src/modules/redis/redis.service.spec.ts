@@ -155,4 +155,3 @@ describe('RedisService', () => {
     service.onModuleDestroy();
   });
 });
-

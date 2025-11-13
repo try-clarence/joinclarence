@@ -1,0 +1,872 @@
+// Clarence Insurance Platform - Database Schema
+// Version: 1.0
+// Date: November 12, 2025
+// Based on: PRD.md and Carrier API Integration Requirements
+
+Project Clarence {
+  database_type: 'PostgreSQL'
+  Note: 'AI-powered insurance platform database schema'
+}
+
+// ============================================
+// USER MANAGEMENT & AUTHENTICATION
+// ============================================
+
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  phone varchar(15) [unique, not null, note: 'US phone number format: (XXX) XXX-XXXX']
+  password_hash varchar(255) [not null]
+  email varchar(255) [null]
+  first_name varchar(100) [null]
+  last_name varchar(100) [null]
+  account_status varchar(20) [not null, default: 'active', note: 'active, locked, suspended']
+  last_login_at timestamp [null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    phone [unique]
+    email
+    created_at
+  }
+
+  Note: 'User accounts - phone-based authentication with SMS verification'
+}
+
+Table verification_codes {
+  id uuid [pk, default: `gen_random_uuid()`]
+  phone varchar(15) [not null]
+  code varchar(6) [not null, note: '6-digit SMS verification code']
+  purpose varchar(50) [not null, note: 'registration, login, password_reset']
+  attempts int [not null, default: 0, note: 'Max 3 attempts']
+  expires_at timestamp [not null, note: 'Valid for 10 minutes']
+  verified_at timestamp [null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (phone, purpose, created_at)
+    expires_at
+  }
+
+  Note: 'SMS verification codes for phone authentication'
+}
+
+Table sessions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  refresh_token varchar(500) [not null, unique]
+  access_token_jti varchar(100) [not null, note: 'JWT ID for access token']
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  expires_at timestamp [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    refresh_token [unique]
+    expires_at
+  }
+
+  Note: 'User sessions and JWT token management'
+}
+
+// ============================================
+// QUOTE REQUEST FLOW (5-STEP PROCESS)
+// ============================================
+
+Table quote_requests {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [null, ref: > users.id, note: 'Null if unauthenticated, linked after registration']
+  session_id varchar(100) [not null, note: 'Anonymous session ID before registration']
+  insurance_type varchar(20) [not null, note: 'personal, commercial']
+  request_type varchar(20) [not null, note: 'new_coverage, renewal']
+  status varchar(50) [not null, default: 'draft', note: 'draft, submitted, processing, quotes_ready, quote_selected, purchased, expired']
+
+  // Step 2: Business/Personal Information
+  legal_business_name varchar(255) [null]
+  dba_name varchar(255) [null]
+  legal_structure varchar(50) [null, note: 'LLC, Corporation, Sole Proprietorship, Partnership']
+  business_website varchar(255) [null]
+  industry varchar(255) [null]
+  industry_code varchar(20) [null, note: 'NAICS code']
+  business_description text [null]
+  fein varchar(20) [null, note: 'Federal Employer Identification Number']
+  year_started int [null]
+  years_current_ownership int [null]
+  address_type varchar(20) [null, note: 'physical, virtual']
+
+  // Address
+  street_address varchar(255) [null]
+  address_unit varchar(50) [null]
+  city varchar(100) [null]
+  state varchar(2) [null]
+  zip_code varchar(10) [null]
+
+  // Additional Business Details
+  has_subsidiaries boolean [null]
+  has_foreign_subsidiaries boolean [null]
+  multiple_entities boolean [null]
+
+  // Contact Information (from form, not user table)
+  contact_first_name varchar(100) [null]
+  contact_last_name varchar(100) [null]
+  contact_email varchar(255) [null]
+  contact_phone varchar(15) [null]
+
+  // Step 3: Financial Information
+  revenue_2024 decimal(15,2) [null]
+  expenses_2024 decimal(15,2) [null]
+  revenue_2025_estimate decimal(15,2) [null]
+  expenses_2025_estimate decimal(15,2) [null]
+  full_time_employees int [null]
+  part_time_employees int [null]
+  total_payroll decimal(15,2) [null]
+  contractor_percentage decimal(5,2) [null, note: '0-100%']
+
+  // Step 5: Final Details
+  additional_comments text [null]
+  consent_marketing boolean [not null, default: false]
+  consent_privacy_policy boolean [not null, default: false]
+
+  // Document Upload
+  uploaded_document_id uuid [null, ref: > uploaded_documents.id]
+
+  // Metadata
+  submitted_at timestamp [null]
+  quotes_ready_at timestamp [null]
+  estimated_completion_time timestamp [null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    session_id
+    status
+    (insurance_type, status)
+    created_at
+    submitted_at
+  }
+
+  Note: 'Main quote request - captures all 5 steps of quote flow'
+}
+
+Table quote_request_coverages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  quote_request_id uuid [not null, ref: > quote_requests.id]
+  coverage_type varchar(50) [not null, note: 'GL, E&O, Cyber, Workers Comp, etc.']
+  is_selected boolean [not null, default: false]
+  is_recommended boolean [not null, default: false]
+  recommendation_reason text [null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    quote_request_id
+    (quote_request_id, coverage_type)
+  }
+
+  Note: 'Step 4: Coverage selections per quote request'
+}
+
+Table uploaded_documents {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [null, ref: > users.id]
+  quote_request_id uuid [null, ref: > quote_requests.id]
+  file_name varchar(255) [not null]
+  file_size int [not null, note: 'bytes']
+  mime_type varchar(100) [not null]
+  storage_path varchar(500) [not null, note: 'S3 or local storage path']
+  document_type varchar(50) [not null, note: 'dec_page, business_doc, policy_doc, certificate']
+
+  // AI Parsing Results
+  is_parsed boolean [not null, default: false]
+  parsed_data jsonb [null, note: 'Extracted fields from document']
+  parsing_confidence jsonb [null, note: 'Confidence scores per field']
+  parsed_at timestamp [null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    quote_request_id
+    document_type
+    created_at
+  }
+
+  Note: 'Uploaded documents with AI parsing results'
+}
+
+// ============================================
+// CARRIER INTEGRATION & QUOTES
+// ============================================
+
+Table carriers {
+  id uuid [pk, default: `gen_random_uuid()`]
+  carrier_code varchar(50) [unique, not null, note: 'reliable_insurance, techshield_underwriters, premier_underwriters, fastbind_insurance']
+  carrier_name varchar(255) [not null]
+  specialization varchar(255) [null]
+  is_active boolean [not null, default: true]
+  api_base_url varchar(500) [null, note: 'Carrier API endpoint']
+  api_key_encrypted text [null, note: 'Encrypted API key']
+  supports_personal boolean [not null, default: true]
+  supports_commercial boolean [not null, default: true]
+  supported_coverages jsonb [null, note: 'Array of coverage types']
+
+  // Health check
+  last_health_check timestamp [null]
+  health_status varchar(20) [null, note: 'operational, degraded, down']
+
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    carrier_code [unique]
+    is_active
+  }
+
+  Note: 'Insurance carriers and their API configurations'
+}
+
+Table carrier_quotes {
+  id uuid [pk, default: `gen_random_uuid()`]
+  quote_request_id uuid [not null, ref: > quote_requests.id]
+  carrier_id uuid [not null, ref: > carriers.id]
+
+  // Carrier Response
+  carrier_quote_id varchar(100) [not null, note: 'Carrier\'s internal quote ID']
+  carrier_response jsonb [not null, note: 'Full carrier API response']
+
+  // Quote Summary
+  status varchar(20) [not null, note: 'quoted, declined, expired']
+  coverage_type varchar(50) [not null]
+
+  // Premium
+  annual_premium decimal(15,2) [null]
+  monthly_premium decimal(15,2) [null]
+  quarterly_premium decimal(15,2) [null]
+  payment_in_full_discount decimal(15,2) [null]
+
+  // Coverage Details
+  coverage_limits jsonb [null, note: 'Per occurrence, aggregate, etc.']
+  deductible decimal(15,2) [null]
+  effective_date date [null]
+  expiration_date date [null]
+
+  // Quote Details
+  policy_form varchar(100) [null]
+  highlights jsonb [null, note: 'Array of coverage highlights']
+  exclusions jsonb [null, note: 'Array of exclusions']
+  optional_coverages jsonb [null, note: 'Array of optional add-ons']
+  underwriting_notes jsonb [null]
+
+  // Decline Information
+  decline_reason text [null]
+  decline_code varchar(50) [null]
+
+  // Package Discount
+  package_discount_percentage decimal(5,2) [null]
+  package_discount_amount decimal(15,2) [null]
+
+  // Validity
+  valid_until timestamp [not null, note: '30 days from quote date']
+
+  // Metadata
+  generated_via_llm boolean [not null, default: false]
+  cached boolean [not null, default: false]
+  response_time_ms int [null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    quote_request_id
+    carrier_id
+    carrier_quote_id
+    status
+    (quote_request_id, carrier_id, coverage_type)
+    valid_until
+  }
+
+  Note: 'Quotes received from carrier APIs'
+}
+
+// ============================================
+// POLICY MANAGEMENT
+// ============================================
+
+Table policies {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  quote_request_id uuid [not null, ref: > quote_requests.id]
+  carrier_quote_id uuid [not null, ref: > carrier_quotes.id]
+  carrier_id uuid [not null, ref: > carriers.id]
+
+  // Policy Identifiers
+  policy_number varchar(100) [not null, unique, note: 'Carrier-issued policy number']
+  carrier_policy_id varchar(100) [not null, note: 'Carrier\'s internal policy ID']
+  carrier_bind_id varchar(100) [null, note: 'Carrier bind transaction ID']
+
+  // Policy Details
+  insurance_type varchar(20) [not null, note: 'personal, commercial']
+  coverage_type varchar(50) [not null]
+  status varchar(20) [not null, default: 'bound', note: 'bound, active, cancelled, expired, pending_cancellation']
+
+  // Coverage & Premium
+  coverage_limits jsonb [not null]
+  deductible decimal(15,2) [not null]
+  annual_premium decimal(15,2) [not null]
+  payment_plan varchar(20) [not null, note: 'annual, monthly, quarterly']
+  monthly_amount decimal(15,2) [null]
+
+  // Dates
+  effective_date date [not null]
+  expiration_date date [not null]
+  bound_at timestamp [not null]
+  cancelled_at timestamp [null]
+
+  // Insured Information
+  insured_name varchar(255) [not null]
+  insured_address text [not null]
+
+  // Payment Information
+  first_payment_due date [null]
+  next_payment_date date [null]
+  payments_remaining int [null]
+  auto_renewal boolean [not null, default: true]
+
+  // Policy Documents
+  policy_document_url varchar(500) [null]
+  declarations_url varchar(500) [null]
+  certificate_url varchar(500) [null]
+
+  // Carrier Contact
+  carrier_contact_info jsonb [null, note: 'Service phone, claims phone, email']
+
+  // Full carrier response
+  carrier_policy_data jsonb [null, note: 'Complete policy data from carrier']
+
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    quote_request_id
+    carrier_id
+    policy_number [unique]
+    status
+    (user_id, status)
+    effective_date
+    expiration_date
+    (expiration_date, status) [note: 'For renewal processing']
+  }
+
+  Note: 'Bound and active insurance policies'
+}
+
+Table policy_endorsements {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_id uuid [not null, ref: > policies.id]
+  carrier_endorsement_id varchar(100) [not null, note: 'Carrier\'s endorsement ID']
+
+  endorsement_type varchar(50) [not null, note: 'add_additional_insured, increase_limits, add_location, etc.']
+  status varchar(20) [not null, default: 'pending', note: 'pending, approved, declined, effective']
+  effective_date date [not null]
+
+  // Changes
+  changes_description text [not null]
+  premium_change decimal(15,2) [null, note: 'Can be positive or negative']
+  annual_adjustment decimal(15,2) [null]
+  pro_rated_charge decimal(15,2) [null]
+
+  // Documents
+  endorsement_document_url varchar(500) [null]
+  updated_declarations_url varchar(500) [null]
+
+  // Carrier Response
+  carrier_response jsonb [null]
+
+  created_at timestamp [not null, default: `now()`]
+  approved_at timestamp [null]
+
+  indexes {
+    policy_id
+    status
+    effective_date
+  }
+
+  Note: 'Policy endorsements - mid-term modifications'
+}
+
+Table additional_insureds {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_id uuid [not null, ref: > policies.id]
+  endorsement_id uuid [null, ref: > policy_endorsements.id]
+
+  name varchar(255) [not null]
+  street_address varchar(255) [null]
+  city varchar(100) [null]
+  state varchar(2) [null]
+  zip_code varchar(10) [null]
+  relationship varchar(255) [null, note: 'Client per contract dated XX/XX/XXXX']
+
+  added_date date [not null]
+  removed_date date [null]
+  is_active boolean [not null, default: true]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    policy_id
+    is_active
+  }
+
+  Note: 'Additional insureds on policies'
+}
+
+Table policy_documents {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_id uuid [not null, ref: > policies.id]
+  endorsement_id uuid [null, ref: > policy_endorsements.id]
+
+  document_type varchar(50) [not null, note: 'policy, declarations, certificate, endorsement, cancellation_notice']
+  document_name varchar(255) [not null]
+  document_url varchar(500) [not null]
+  file_size int [null]
+  version int [not null, default: 1]
+
+  // Carrier Info
+  carrier_document_id varchar(100) [null]
+
+  generated_at timestamp [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    policy_id
+    endorsement_id
+    document_type
+    (policy_id, document_type, version)
+  }
+
+  Note: 'Policy-related documents from carrier'
+}
+
+Table certificates_of_insurance {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_id uuid [not null, ref: > policies.id]
+  carrier_certificate_id varchar(100) [not null, note: 'Carrier\'s certificate ID']
+  certificate_number varchar(100) [not null]
+
+  // Certificate Holder
+  holder_name varchar(255) [not null]
+  holder_street varchar(255) [null]
+  holder_city varchar(100) [null]
+  holder_state varchar(2) [null]
+  holder_zip varchar(10) [null]
+
+  // Details
+  is_additional_insured boolean [not null, default: false]
+  description_of_operations text [null]
+  special_provisions jsonb [null]
+  project_number varchar(100) [null]
+  project_description text [null]
+
+  // Certificate Document
+  certificate_url varchar(500) [not null]
+  format varchar(20) [not null, default: 'ACORD_25', note: 'ACORD 25 form']
+
+  issued_date date [not null]
+  expires_at date [not null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    policy_id
+    certificate_number
+    issued_date
+  }
+
+  Note: 'Certificates of Insurance (COI) - ACORD 25 forms'
+}
+
+// ============================================
+// PAYMENTS
+// ============================================
+
+Table payments {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  policy_id uuid [not null, ref: > policies.id]
+
+  // Payment Details
+  payment_type varchar(20) [not null, note: 'initial, recurring, endorsement, one_time']
+  amount decimal(15,2) [not null]
+  currency varchar(3) [not null, default: 'USD']
+
+  // Status
+  status varchar(20) [not null, note: 'pending, succeeded, failed, refunded']
+  payment_method varchar(50) [not null, note: 'credit_card, ach, check']
+
+  // Payment Provider (Stripe)
+  stripe_payment_intent_id varchar(100) [null]
+  stripe_charge_id varchar(100) [null]
+  payment_method_last4 varchar(4) [null]
+
+  // Carrier Payment
+  carrier_payment_id varchar(100) [null, note: 'Carrier\'s payment confirmation ID']
+
+  // Due Date
+  due_date date [null]
+  paid_at timestamp [null]
+
+  // Receipt
+  receipt_url varchar(500) [null]
+
+  // Failure Info
+  failure_code varchar(50) [null]
+  failure_message text [null]
+
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    policy_id
+    status
+    (policy_id, due_date)
+    stripe_payment_intent_id
+    created_at
+  }
+
+  Note: 'Payment transactions for policies'
+}
+
+Table payment_methods {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+
+  type varchar(20) [not null, note: 'credit_card, debit_card, ach']
+  is_default boolean [not null, default: false]
+
+  // Stripe
+  stripe_payment_method_id varchar(100) [not null]
+
+  // Card Info (for display only)
+  brand varchar(50) [null, note: 'Visa, Mastercard, Amex']
+  last4 varchar(4) [null]
+  exp_month int [null]
+  exp_year int [null]
+
+  // Bank Account (for ACH)
+  bank_name varchar(100) [null]
+  account_last4 varchar(4) [null]
+  account_type varchar(20) [null, note: 'checking, savings']
+
+  // Billing Address
+  billing_street varchar(255) [null]
+  billing_city varchar(100) [null]
+  billing_state varchar(2) [null]
+  billing_zip varchar(10) [null]
+
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    (user_id, is_default)
+    stripe_payment_method_id
+  }
+
+  Note: 'Saved payment methods'
+}
+
+// ============================================
+// RENEWALS
+// ============================================
+
+Table policy_renewals {
+  id uuid [pk, default: `gen_random_uuid()`]
+  original_policy_id uuid [not null, ref: > policies.id]
+  user_id uuid [not null, ref: > users.id]
+  carrier_id uuid [not null, ref: > carriers.id]
+
+  renewal_type varchar(20) [not null, note: 'one_click, review_update, shop_compare']
+  status varchar(20) [not null, default: 'pending', note: 'pending, quoted, accepted, declined, expired']
+
+  // Renewal Quote
+  carrier_renewal_quote_id varchar(100) [null]
+  renewal_quote_data jsonb [null, note: 'Full renewal quote from carrier']
+
+  // New Premium
+  new_annual_premium decimal(15,2) [null]
+  new_monthly_premium decimal(15,2) [null]
+  premium_change_amount decimal(15,2) [null]
+  premium_change_percentage decimal(5,2) [null]
+  premium_change_reasons jsonb [null, note: 'Array of reasons for premium change']
+
+  // Loyalty Discount
+  loyalty_discount_percentage decimal(5,2) [null]
+  loyalty_discount_amount decimal(15,2) [null]
+
+  // Business Changes
+  business_changes jsonb [null, note: 'Revenue, employees, locations changed']
+  coverage_changes jsonb [null, note: 'Limit increases, new coverages added']
+
+  // New Policy (if renewed)
+  new_policy_id uuid [null, ref: > policies.id]
+
+  // Dates
+  desired_effective_date date [null]
+  quote_valid_until timestamp [null]
+  renewed_at timestamp [null]
+
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    original_policy_id
+    user_id
+    carrier_id
+    status
+    new_policy_id
+  }
+
+  Note: 'Policy renewal process and quotes'
+}
+
+Table renewal_notifications {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_id uuid [not null, ref: > policies.id]
+  user_id uuid [not null, ref: > users.id]
+
+  notification_type varchar(50) [not null, note: '90_day, 60_day, 45_day, 30_day, 15_day, 7_day']
+  days_before_expiration int [not null]
+
+  // Notification Channels
+  sent_email boolean [not null, default: false]
+  sent_sms boolean [not null, default: false]
+  sent_in_app boolean [not null, default: false]
+
+  sent_at timestamp [null]
+  opened_at timestamp [null]
+  clicked_at timestamp [null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    policy_id
+    user_id
+    notification_type
+    sent_at
+  }
+
+  Note: 'Renewal notification tracking'
+}
+
+// ============================================
+// CANCELLATIONS
+// ============================================
+
+Table policy_cancellations {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_id uuid [not null, ref: > policies.id]
+  carrier_cancellation_id varchar(100) [null]
+
+  cancellation_type varchar(30) [not null, note: 'insured_request, non_payment, underwriting']
+  status varchar(20) [not null, default: 'pending', note: 'pending, approved, effective']
+
+  effective_date date [not null]
+  reason text [null]
+
+  // Refund Calculation
+  earned_premium decimal(15,2) [null]
+  unearned_premium decimal(15,2) [null]
+  cancellation_fee decimal(15,2) [null]
+  short_rate_penalty decimal(15,2) [null]
+  net_refund decimal(15,2) [null]
+  refund_method varchar(50) [null]
+  estimated_refund_date date [null]
+
+  // E-Signature
+  signature_name varchar(255) [null]
+  signature_ip varchar(45) [null]
+  signed_at timestamp [null]
+
+  // Cancellation Notice
+  cancellation_notice_url varchar(500) [null]
+
+  // Carrier Response
+  carrier_response jsonb [null]
+
+  created_at timestamp [not null, default: `now()`]
+  approved_at timestamp [null]
+
+  indexes {
+    policy_id
+    status
+    effective_date
+  }
+
+  Note: 'Policy cancellation requests and processing'
+}
+
+// ============================================
+// NOTIFICATIONS & COMMUNICATIONS
+// ============================================
+
+Table notifications {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+
+  notification_type varchar(50) [not null, note: 'quote_ready, policy_issued, payment_due, renewal_reminder, etc.']
+  title varchar(255) [not null]
+  message text [not null]
+
+  // Channels
+  channel varchar(20) [not null, note: 'email, sms, in_app, push']
+
+  // Status
+  status varchar(20) [not null, default: 'pending', note: 'pending, sent, delivered, failed, read']
+
+  // Related Entities
+  quote_request_id uuid [null, ref: > quote_requests.id]
+  policy_id uuid [null, ref: > policies.id]
+
+  // Delivery Info
+  sent_at timestamp [null]
+  delivered_at timestamp [null]
+  read_at timestamp [null]
+  clicked_at timestamp [null]
+
+  // Failure
+  failure_reason text [null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    notification_type
+    status
+    (user_id, created_at)
+  }
+
+  Note: 'User notifications across all channels'
+}
+
+// ============================================
+// AUDIT & LOGGING
+// ============================================
+
+Table audit_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [null, ref: > users.id]
+
+  action varchar(100) [not null, note: 'quote_created, policy_bound, payment_made, etc.']
+  entity_type varchar(50) [not null, note: 'quote_request, policy, payment, etc.']
+  entity_id uuid [not null]
+
+  // Request Info
+  ip_address varchar(45) [null]
+  user_agent text [null]
+
+  // Changes (for update actions)
+  old_values jsonb [null]
+  new_values jsonb [null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    entity_type
+    entity_id
+    (entity_type, entity_id)
+    created_at
+  }
+
+  Note: 'Audit trail for all important actions'
+}
+
+Table carrier_api_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  carrier_id uuid [not null, ref: > carriers.id]
+  quote_request_id uuid [null, ref: > quote_requests.id]
+  policy_id uuid [null, ref: > policies.id]
+
+  endpoint varchar(255) [not null, note: 'API endpoint called']
+  http_method varchar(10) [not null]
+
+  // Request
+  request_body jsonb [null]
+  request_headers jsonb [null]
+
+  // Response
+  http_status int [null]
+  response_body jsonb [null]
+  response_headers jsonb [null]
+  response_time_ms int [null]
+
+  // Error
+  error_message text [null]
+  error_code varchar(50) [null]
+
+  // Success
+  success boolean [not null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    carrier_id
+    quote_request_id
+    policy_id
+    success
+    created_at
+  }
+
+  Note: 'Logs of all carrier API calls for debugging and monitoring'
+}
+
+// ============================================
+// AI & CHAT SUPPORT (Future Phase)
+// ============================================
+
+Table chat_conversations {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+
+  status varchar(20) [not null, default: 'active', note: 'active, resolved, escalated']
+  escalated_to_human boolean [not null, default: false]
+
+  // Context
+  quote_request_id uuid [null, ref: > quote_requests.id]
+  policy_id uuid [null, ref: > policies.id]
+
+  started_at timestamp [not null, default: `now()`]
+  ended_at timestamp [null]
+
+  indexes {
+    user_id
+    status
+    started_at
+  }
+
+  Note: 'AI chat support conversations'
+}
+
+Table chat_messages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  conversation_id uuid [not null, ref: > chat_conversations.id]
+
+  sender_type varchar(20) [not null, note: 'user, ai, agent']
+  sender_id uuid [null, note: 'User ID or Agent ID']
+  message text [not null]
+
+  // AI Info
+  ai_model varchar(50) [null, note: 'gpt-4, claude-3, etc.']
+  ai_confidence decimal(5,2) [null]
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    conversation_id
+    created_at
+  }
+
+  Note: 'Individual messages in chat conversations'
+}

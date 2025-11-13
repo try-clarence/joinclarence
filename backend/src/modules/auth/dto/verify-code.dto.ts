@@ -22,4 +22,3 @@ export class VerifyCodeResponseDto {
   @ApiProperty()
   expiresAt: string;
 }
-

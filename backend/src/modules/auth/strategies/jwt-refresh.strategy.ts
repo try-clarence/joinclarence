@@ -33,4 +33,3 @@ export class JwtRefreshStrategy extends PassportStrategy(
     };
   }
 }
-
