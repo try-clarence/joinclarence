@@ -1,0 +1,298 @@
+# Clarence Insurance Platform - Quotes & Policies API Tests
+# Install the REST Client extension in VS Code to use this file
+# Click "Send Request" above each request to test
+
+@baseUrl = http://localhost:3000/api/v1
+@contentType = application/json
+
+### Variables (set from auth.http and responses)
+# Get accessToken and userId from auth.http first
+@accessToken = 
+@userId = 
+@quoteRequestId = 
+@carrierQuoteId =
+@policyId =
+
+###############################################################################
+# QUOTE REQUEST FLOW
+###############################################################################
+
+### 1. Create Quote Request (Unauthenticated - Step 1-5 of frontend flow)
+# @name createQuote
+POST {{baseUrl}}/quotes
+Content-Type: {{contentType}}
+
+{
+  "sessionId": "test-session-{{$timestamp}}",
+  "insuranceType": "commercial",
+  "requestType": "new_coverage",
+  "legalBusinessName": "Acme Tech LLC",
+  "dbaName": "Acme Technologies",
+  "legalStructure": "LLC",
+  "businessWebsite": "https://acmetech.com",
+  "industry": "Technology Consulting",
+  "industryCode": "541512",
+  "businessDescription": "Software development and IT consulting services",
+  "fein": "12-3456789",
+  "yearStarted": 2020,
+  "yearsCurrentOwnership": 4,
+  "addressType": "physical",
+  "streetAddress": "123 Tech Street",
+  "addressUnit": "Suite 100",
+  "city": "San Francisco",
+  "state": "CA",
+  "zipCode": "94105",
+  "revenue2024": 500000,
+  "expenses2024": 300000,
+  "revenue2025Estimate": 750000,
+  "expenses2025Estimate": 400000,
+  "fullTimeEmployees": 5,
+  "partTimeEmployees": 2,
+  "totalPayroll": 400000,
+  "contractorPercentage": 20,
+  "contactFirstName": "John",
+  "contactLastName": "Doe",
+  "contactEmail": "john@acmetech.com",
+  "contactPhone": "+15551234567",
+  "additionalComments": "Looking for comprehensive coverage"
+}
+
+### Extract quote request ID
+@quoteRequestId = {{createQuote.response.body.id}}
+
+### 2. Get Quote Request (Before coverages selected)
+GET {{baseUrl}}/quotes/{{quoteRequestId}}
+Content-Type: {{contentType}}
+
+### 3. Update Quote Request
+PUT {{baseUrl}}/quotes/{{quoteRequestId}}
+Content-Type: {{contentType}}
+
+{
+  "revenue2024": 600000,
+  "fullTimeEmployees": 7,
+  "additionalComments": "Updated revenue and headcount"
+}
+
+###############################################################################
+# COVERAGE SELECTION (Step 4 of frontend flow)
+###############################################################################
+
+### 4. Add/Select Coverages
+POST {{baseUrl}}/quotes/{{quoteRequestId}}/coverages
+Content-Type: {{contentType}}
+
+{
+  "selectedCoverages": [
+    "general_liability",
+    "professional_liability",
+    "cyber_liability"
+  ]
+}
+
+### 5. Get Selected Coverages
+GET {{baseUrl}}/quotes/{{quoteRequestId}}/coverages
+Content-Type: {{contentType}}
+
+###############################################################################
+# USER REGISTRATION & LINKING (After Step 5 submission)
+###############################################################################
+
+### 6. Link Quote to User (After registration from auth.http)
+PUT {{baseUrl}}/quotes/{{quoteRequestId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{userId}}"
+}
+
+###############################################################################
+# QUOTE SUBMISSION & CARRIER INTEGRATION
+###############################################################################
+
+### 7. Submit Quote Request (Triggers carrier API calls to all carriers)
+# This will call 4 carriers in parallel for 3 coverage types = up to 12 quotes
+POST {{baseUrl}}/quotes/{{quoteRequestId}}/submit
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+### 8. Get Quote Request with Status
+GET {{baseUrl}}/quotes/{{quoteRequestId}}
+Authorization: Bearer {{accessToken}}
+
+### 9. Get Carrier Quotes (Wait ~10 seconds after submission for carriers to respond)
+# @name getQuotes
+GET {{baseUrl}}/quotes/{{quoteRequestId}}
+Authorization: Bearer {{accessToken}}
+
+### Extract first quote ID for binding
+@carrierQuoteId = {{getQuotes.response.body.quotes[0].id}}
+
+###############################################################################
+# POLICY BINDING
+###############################################################################
+
+### 10. Bind Policy from Selected Quote
+# @name bindPolicy
+POST {{baseUrl}}/policies/bind
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "carrierQuoteId": "{{carrierQuoteId}}",
+  "userId": "{{userId}}",
+  "paymentPlan": "monthly",
+  "autoRenewal": true,
+  "paymentMethodId": "pm_test_stripe_123",
+  "additionalNotes": "Test policy binding"
+}
+
+### Extract policy ID
+@policyId = {{bindPolicy.response.body.id}}
+
+### 11. Get All User Policies
+GET {{baseUrl}}/policies
+Authorization: Bearer {{accessToken}}
+
+### 12. Get Specific Policy Details
+GET {{baseUrl}}/policies/{{policyId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# POLICY MANAGEMENT
+###############################################################################
+
+### 13. Update Policy
+PUT {{baseUrl}}/policies/{{policyId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "autoRenewal": false,
+  "additionalNotes": "Disabled auto-renewal"
+}
+
+### 14. Cancel Policy
+DELETE {{baseUrl}}/policies/{{policyId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "Found alternative coverage",
+  "effectiveDate": "2025-12-01"
+}
+
+###############################################################################
+# ADVANCED QUERIES
+###############################################################################
+
+### 15. Get Quotes by Coverage Type
+GET {{baseUrl}}/quotes/{{quoteRequestId}}?coverageType=general_liability
+Authorization: Bearer {{accessToken}}
+
+### 16. Get Quotes by Carrier
+GET {{baseUrl}}/quotes/{{quoteRequestId}}?carrierId=reliable_insurance
+Authorization: Bearer {{accessToken}}
+
+### 17. Get Policies by Status
+GET {{baseUrl}}/policies?status=active
+Authorization: Bearer {{accessToken}}
+
+### 18. Get Policies by Coverage Type
+GET {{baseUrl}}/policies?coverageType=cyber_liability
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# ERROR CASES
+###############################################################################
+
+### 19. Submit Quote Without Coverages (Should fail)
+POST {{baseUrl}}/quotes/{{quoteRequestId}}/submit
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+### 20. Submit Already Submitted Quote (Should fail)
+POST {{baseUrl}}/quotes/{{quoteRequestId}}/submit
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+### 21. Bind Invalid Quote (Should fail)
+POST {{baseUrl}}/policies/bind
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "carrierQuoteId": "invalid-quote-id",
+  "userId": "{{userId}}",
+  "paymentPlan": "monthly"
+}
+
+### 22. Get Non-existent Quote (Should fail)
+GET {{baseUrl}}/quotes/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# COMPLETE FLOW EXAMPLE
+###############################################################################
+
+# 📋 Full Quote-to-Policy Flow:
+#
+# 1. Register/Login (use auth.http)
+#    → Get accessToken and userId
+#
+# 2. Create Quote Request (#1)
+#    → Returns quoteRequestId
+#    → Status: "draft"
+#
+# 3. Select Coverages (#4)
+#    → Adds 3 coverage types
+#    → Status: still "draft"
+#
+# 4. Link to User (#6)
+#    → Associates quote with user
+#    → Status: still "draft"
+#
+# 5. Submit Quote (#7)
+#    → Triggers carrier API calls
+#    → Status: "processing"
+#    → Calls 4 carriers × 3 coverages = up to 12 quotes
+#
+# 6. Wait 10 seconds ⏰
+#    → Carriers respond asynchronously
+#
+# 7. Get Quotes (#9)
+#    → Status: "quotes_ready"
+#    → View quotes from multiple carriers
+#    → Each with premium, limits, highlights
+#
+# 8. Bind Policy (#10)
+#    → Creates policy from selected quote
+#    → Calls carrier bind API
+#    → Returns policy with policy_number
+#
+# 9. Get Policies (#11, #12)
+#    → View bound policies
+#    → Access policy documents
+#
+###############################################################################
+# NOTES
+###############################################################################
+
+# Prerequisites:
+# - Backend server running on port 3000
+# - Carrier simulator running on port 3001
+# - User registered and logged in (from auth.http)
+#
+# Expected Results:
+# - Quote creation: ~200ms
+# - Coverage selection: ~100ms
+# - Quote submission: ~5-10 seconds (carrier calls)
+# - Policy binding: ~2-3 seconds (carrier bind)
+#
+# Tips:
+# - Use {{$timestamp}} for unique session IDs
+# - Save accessToken from auth.http
+# - Wait for "quotes_ready" status before binding
+# - Check carrier health in carriers.http if no quotes
+

@@ -25,4 +25,3 @@ export class ResetPasswordResponseDto {
   @ApiProperty()
   message: string;
 }
-

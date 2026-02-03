@@ -362,7 +362,8 @@ export class AuthService {
     await this.usersService.updatePassword(user.id, newPassword);
 
     return {
-      message: 'Password reset successful. You can now login with your new password.',
+      message:
+        'Password reset successful. You can now login with your new password.',
     };
   }
 
@@ -455,4 +456,3 @@ export class AuthService {
     }
   }
 }
-

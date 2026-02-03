@@ -148,7 +148,10 @@ describe('UsersService', () => {
     it('should return true for valid password', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const result = await service.validatePassword(mockUser, 'correct-password');
+      const result = await service.validatePassword(
+        mockUser,
+        'correct-password',
+      );
 
       expect(result).toBe(true);
       expect(bcrypt.compare).toHaveBeenCalledWith(
@@ -222,4 +225,3 @@ describe('UsersService', () => {
     });
   });
 });
-

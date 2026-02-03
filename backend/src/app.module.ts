@@ -7,6 +7,9 @@ import { UsersModule } from './modules/users/users.module';
 import { SmsModule } from './modules/sms/sms.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { FileStorageModule } from './modules/file-storage/file-storage.module';
+import { CarriersModule } from './modules/carriers/carriers.module';
+import { QuotesModule } from './modules/quotes/quotes.module';
+import { PoliciesModule } from './modules/policies/policies.module';
 
 @Module({
   imports: [
@@ -27,7 +30,7 @@ import { FileStorageModule } from './modules/file-storage/file-storage.module';
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        synchronize: false, // Always use migrations in production
         logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
@@ -40,7 +43,9 @@ import { FileStorageModule } from './modules/file-storage/file-storage.module';
     SmsModule,
     RedisModule,
     FileStorageModule,
+    CarriersModule,
+    QuotesModule,
+    PoliciesModule,
   ],
 })
 export class AppModule {}
-

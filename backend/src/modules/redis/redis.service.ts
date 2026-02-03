@@ -57,4 +57,3 @@ export class RedisService implements OnModuleDestroy {
     this.client.disconnect();
   }
 }
-

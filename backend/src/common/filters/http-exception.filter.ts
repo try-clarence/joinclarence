@@ -22,8 +22,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
       method: request.method,
       message:
-        typeof exceptionResponse === 'object' &&
-        'message' in exceptionResponse
+        typeof exceptionResponse === 'object' && 'message' in exceptionResponse
           ? exceptionResponse.message
           : exception.message,
       error:
@@ -35,4 +34,3 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json(errorResponse);
   }
 }
-

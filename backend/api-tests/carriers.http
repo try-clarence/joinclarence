@@ -1,0 +1,444 @@
+# Clarence Insurance Platform - Carrier API Tests
+# Install the REST Client extension in VS Code to use this file
+# Click "Send Request" above each request to test
+
+@baseUrl = http://localhost:3000/api/v1
+@carrierSimulatorUrl = http://localhost:3001/api/v1
+@carrierApiKey = test_clarence_key_123
+@contentType = application/json
+
+### Variables (will be set from responses)
+# @accessToken = 
+# @userId = 
+# @quoteRequestId = 
+# @carrierQuoteId =
+# @policyId =
+
+###############################################################################
+# CARRIER API SIMULATOR TESTS (Port 3001)
+###############################################################################
+
+### 1. Carrier Health Check - Reliable Insurance
+GET {{carrierSimulatorUrl}}/carriers/reliable_insurance/health
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+### 2. Carrier Health Check - TechShield
+GET {{carrierSimulatorUrl}}/carriers/techshield_underwriters/health
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+### 3. Carrier Health Check - Premier
+GET {{carrierSimulatorUrl}}/carriers/premier_underwriters/health
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+### 4. Carrier Health Check - FastBind
+GET {{carrierSimulatorUrl}}/carriers/fastbind_insurance/health
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+### 5. Get Commercial Quote - General Liability (Reliable Insurance)
+POST {{carrierSimulatorUrl}}/carriers/reliable_insurance/quote
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "quote_request_id": "test_qr_001",
+  "insurance_type": "commercial",
+  "business_info": {
+    "legal_name": "Acme Tech Solutions LLC",
+    "dba_name": "Acme Tech",
+    "legal_structure": "LLC",
+    "website": "https://acmetech.com",
+    "industry": "Technology Consulting",
+    "industry_code": "541512",
+    "description": "We provide IT consulting and software development services",
+    "fein": "12-3456789",
+    "year_started": 2018,
+    "years_current_ownership": 5,
+    "address": {
+      "street": "123 Main St",
+      "suite": "Suite 200",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94102"
+    },
+    "financial_info": {
+      "annual_revenue": 500000,
+      "annual_payroll": 400000,
+      "full_time_employees": 5,
+      "part_time_employees": 2,
+      "contractors": 3
+    },
+    "contact_info": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john@acmetech.com",
+      "phone": "+15551234567",
+      "title": "CEO"
+    }
+  },
+  "coverage_requests": [
+    {
+      "coverage_type": "general_liability",
+      "requested_limits": {
+        "per_occurrence": 1000000,
+        "general_aggregate": 2000000
+      },
+      "requested_deductible": 500,
+      "effective_date": "2025-12-01"
+    }
+  ]
+}
+
+### 6. Get Multi-Coverage Commercial Quote (TechShield)
+POST {{carrierSimulatorUrl}}/carriers/techshield_underwriters/quote
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "quote_request_id": "test_qr_002",
+  "insurance_type": "commercial",
+  "business_info": {
+    "legal_name": "Acme Tech Solutions LLC",
+    "dba_name": "Acme Tech",
+    "legal_structure": "LLC",
+    "website": "https://acmetech.com",
+    "industry": "Technology Consulting",
+    "industry_code": "541512",
+    "description": "Software development and IT consulting services",
+    "fein": "12-3456789",
+    "year_started": 2018,
+    "years_current_ownership": 5,
+    "address": {
+      "street": "123 Main St",
+      "suite": "Suite 200",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94102"
+    },
+    "financial_info": {
+      "annual_revenue": 500000,
+      "annual_payroll": 400000,
+      "full_time_employees": 5,
+      "part_time_employees": 2,
+      "contractors": 3
+    },
+    "contact_info": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john@acmetech.com",
+      "phone": "+15551234567",
+      "title": "CEO"
+    }
+  },
+  "coverage_requests": [
+    {
+      "coverage_type": "general_liability",
+      "requested_limits": {
+        "per_occurrence": 1000000,
+        "general_aggregate": 2000000
+      },
+      "requested_deductible": 500,
+      "effective_date": "2025-12-01"
+    },
+    {
+      "coverage_type": "professional_liability",
+      "requested_limits": {
+        "per_claim": 1000000,
+        "aggregate": 2000000
+      },
+      "requested_deductible": 5000,
+      "requested_retroactive_date": "2018-01-01",
+      "effective_date": "2025-12-01"
+    },
+    {
+      "coverage_type": "cyber_liability",
+      "cyber_info": {
+        "has_cybersecurity_policy": true,
+        "has_incident_response_plan": true,
+        "handles_pii": true,
+        "number_of_records": 5000,
+        "has_encryption": true,
+        "has_mfa": true,
+        "conducts_security_training": true
+      },
+      "requested_limits": {
+        "per_incident": 1000000,
+        "aggregate": 2000000
+      },
+      "requested_deductible": 10000,
+      "effective_date": "2025-12-01"
+    }
+  ],
+  "additional_data": {
+    "prior_coverage": true,
+    "claims_history": [],
+    "credit_score_tier": "good"
+  }
+}
+
+### 7. Get Personal Insurance Quote - Homeowners (Reliable Insurance)
+POST {{carrierSimulatorUrl}}/carriers/reliable_insurance/quote
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "quote_request_id": "test_personal_001",
+  "insurance_type": "personal",
+  "personal_info": {
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "date_of_birth": "1990-05-20",
+    "gender": "F",
+    "marital_status": "single",
+    "occupation": "Teacher",
+    "credit_score_tier": "excellent",
+    "address": {
+      "street": "789 Oak St",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "78701"
+    },
+    "email": "jane.smith@example.com",
+    "phone": "+15551234567"
+  },
+  "coverage_requests": [
+    {
+      "coverage_type": "homeowners",
+      "property_info": {
+        "dwelling_value": 350000,
+        "year_built": 2018,
+        "square_feet": 1800,
+        "construction_type": "frame",
+        "roof_type": "asphalt_shingle",
+        "roof_age": 2,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "garage": true,
+        "pool": false,
+        "alarm_system": true,
+        "fire_sprinklers": false,
+        "distance_to_fire_station_miles": 1.5
+      },
+      "requested_limits": {
+        "dwelling": 350000,
+        "personal_property": 200000,
+        "liability": 300000,
+        "medical_payments": 5000
+      },
+      "requested_deductible": 1000,
+      "effective_date": "2025-12-01"
+    }
+  ],
+  "additional_data": {
+    "prior_insurance": true,
+    "prior_carrier": "State Farm",
+    "continuous_coverage_years": 3,
+    "claims_last_5_years": []
+  }
+}
+
+### 8. Bind Policy (Carrier Simulator) - Replace quote_id with actual value
+POST {{carrierSimulatorUrl}}/carriers/techshield_underwriters/bind
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "quote_id": "TSU-Q-2025-001234-CY",
+  "effective_date": "2025-12-01",
+  "payment_plan": "monthly",
+  "payment_info": {
+    "method": "credit_card",
+    "token": "tok_stripe_12345",
+    "billing_address": {
+      "street": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94102"
+    }
+  },
+  "insured_info": {
+    "primary_contact": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john@acmetech.com",
+      "phone": "+15551234567",
+      "title": "CEO"
+    }
+  },
+  "signature": {
+    "full_name": "John Doe",
+    "signed_at": "2025-11-12T11:00:00Z",
+    "ip_address": "192.168.1.100"
+  }
+}
+
+### 9. Get Policy Details (Carrier Simulator) - Replace policy_id with actual value
+GET {{carrierSimulatorUrl}}/carriers/techshield_underwriters/policies/TSU-P-2025-001234
+X-API-Key: {{carrierApiKey}}
+
+### 10. Generate Certificate of Insurance - Replace policy_id with actual value
+POST {{carrierSimulatorUrl}}/carriers/techshield_underwriters/policies/TSU-P-2025-001234/certificate
+X-API-Key: {{carrierApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "certificate_holder": {
+    "name": "Certificate Holder Company LLC",
+    "address": {
+      "street": "456 Pine Ave",
+      "city": "New York",
+      "state": "NY",
+      "zip": "10001"
+    }
+  },
+  "additional_insured": true,
+  "description_of_operations": "Software development services per contract dated 11/01/2025",
+  "special_provisions": [
+    "Certificate holder is included as additional insured",
+    "30 days notice of cancellation provided"
+  ]
+}
+
+###############################################################################
+# CLARENCE BACKEND API TESTS (Port 3000)
+###############################################################################
+
+### 11. Get All Carriers
+GET {{baseUrl}}/carriers
+Content-Type: {{contentType}}
+
+### 12. Create Quote Request
+# @name createQuote
+POST {{baseUrl}}/quotes
+Content-Type: {{contentType}}
+
+{
+  "sessionId": "test-session-12345",
+  "insuranceType": "commercial",
+  "requestType": "new_coverage",
+  "legalBusinessName": "Acme Tech LLC",
+  "dbaName": "Acme Technologies",
+  "legalStructure": "LLC",
+  "businessWebsite": "https://acmetech.com",
+  "industry": "Technology Consulting",
+  "industryCode": "541512",
+  "businessDescription": "Software development and IT consulting services",
+  "fein": "12-3456789",
+  "yearStarted": 2020,
+  "yearsCurrentOwnership": 4,
+  "addressType": "physical",
+  "streetAddress": "123 Tech Street",
+  "addressUnit": "Suite 100",
+  "city": "San Francisco",
+  "state": "CA",
+  "zipCode": "94105",
+  "revenue2024": 500000,
+  "expenses2024": 300000,
+  "revenue2025Estimate": 750000,
+  "expenses2025Estimate": 400000,
+  "fullTimeEmployees": 5,
+  "partTimeEmployees": 2,
+  "totalPayroll": 400000,
+  "contractorPercentage": 20,
+  "contactFirstName": "John",
+  "contactLastName": "Doe",
+  "contactEmail": "john@acmetech.com",
+  "contactPhone": "+15551234567",
+  "additionalComments": "Looking for comprehensive coverage"
+}
+
+### Extract quote request ID
+@quoteRequestId = {{createQuote.response.body.id}}
+
+### 13. Add Coverages to Quote Request
+POST {{baseUrl}}/quotes/{{quoteRequestId}}/coverages
+Content-Type: {{contentType}}
+
+{
+  "selectedCoverages": [
+    "general_liability",
+    "professional_liability",
+    "cyber_liability"
+  ]
+}
+
+### 14. Link Quote to User (requires authentication - use token from auth.http)
+PUT {{baseUrl}}/quotes/{{quoteRequestId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{userId}}"
+}
+
+### 15. Submit Quote Request (Triggers Carrier API Calls)
+POST {{baseUrl}}/quotes/{{quoteRequestId}}/submit
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+### 16. Get Quote Request with Carrier Quotes (Wait 10 seconds after submit)
+# @name getQuotes
+GET {{baseUrl}}/quotes/{{quoteRequestId}}
+Authorization: Bearer {{accessToken}}
+
+### Extract first quote ID
+@carrierQuoteId = {{getQuotes.response.body.quotes[0].id}}
+
+### 17. Bind Policy from Quote
+# @name bindPolicy
+POST {{baseUrl}}/policies/bind
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "carrierQuoteId": "{{carrierQuoteId}}",
+  "userId": "{{userId}}",
+  "paymentPlan": "monthly",
+  "autoRenewal": true,
+  "paymentMethodId": "pm_test_123",
+  "additionalNotes": "Test policy binding via REST Client"
+}
+
+### Extract policy ID
+@policyId = {{bindPolicy.response.body.id}}
+
+### 18. Get User Policies
+GET {{baseUrl}}/policies
+Authorization: Bearer {{accessToken}}
+
+### 19. Get Specific Policy
+GET {{baseUrl}}/policies/{{policyId}}
+Authorization: Bearer {{accessToken}}
+
+### 20. Check Carrier Health (Authenticated)
+GET {{baseUrl}}/carriers/reliable_insurance/health
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# NOTES
+###############################################################################
+
+# To use this file:
+# 1. Install REST Client extension in VS Code (by Huachao Mao)
+# 2. Start the Clarence backend: cd backend && npm run start:dev
+# 3. Start the carrier simulator: (when available)
+# 4. Click "Send Request" above any request
+# 5. View responses in the right panel
+#
+# Variables are automatically extracted from responses using @name
+# You can manually update variables at the top of the file
+#
+# Flow for full test:
+# 1. Use auth.http to register/login and get accessToken
+# 2. Create Quote Request (#12) - extracts quoteRequestId
+# 3. Add Coverages (#13)
+# 4. Link Quote to User (#14)
+# 5. Submit Quote (#15) - triggers carrier API calls
+# 6. Wait 10 seconds
+# 7. Get Quotes (#16) - extracts carrierQuoteId
+# 8. Bind Policy (#17) - extracts policyId
+# 9. Get Policies (#18, #19)
+

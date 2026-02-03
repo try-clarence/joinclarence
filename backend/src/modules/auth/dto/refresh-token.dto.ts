@@ -17,4 +17,3 @@ export class RefreshTokenResponseDto {
   @ApiProperty()
   expiresIn: number;
 }
-

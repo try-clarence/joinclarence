@@ -1,0 +1,505 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ============================================
+  # BACKEND CI/CD
+  # ============================================
+  backend-lint:
+    name: Backend - Lint Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./backend
+        run: npm run lint
+
+  backend-audit:
+    name: Backend - Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run npm audit
+        working-directory: ./backend
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Run npm audit (production only)
+        working-directory: ./backend
+        run: npm audit --production --audit-level=high
+
+  backend-unit-tests:
+    name: Backend - Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: ./backend
+        run: npm run test:unit
+
+      - name: Generate coverage report
+        working-directory: ./backend
+        run: npm run test:cov
+        if: matrix.node-version == '18'
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.node-version == '18'
+        with:
+          files: ./backend/coverage/lcov.info
+          flags: backend-unittests
+          name: backend-coverage
+        continue-on-error: true
+
+  backend-e2e-tests:
+    name: Backend - E2E Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clarence_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run database migrations
+        working-directory: ./backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_NAME: clarence_db
+        run: npm run migration:run
+
+      - name: Start carrier-api-simulator
+        working-directory: ./carrier-api-simulator
+        run: |
+          npm ci
+          npm run build
+          npm start > /tmp/carrier-simulator.log 2>&1 &
+          echo $! > /tmp/carrier-simulator.pid
+          sleep 10
+          for i in {1..30}; do
+            if curl -f -H "X-API-Key: test_clarence_key_123" \
+              http://localhost:3001/api/v1/carriers/reliable_insurance/health > /dev/null 2>&1; then
+              echo "Carrier simulator is ready!"
+              break
+            fi
+            echo "Waiting for carrier simulator... ($i/30)"
+            sleep 2
+          done
+          curl -f -H "X-API-Key: test_clarence_key_123" \
+            http://localhost:3001/api/v1/carriers/reliable_insurance/health || exit 1
+
+      - name: Run E2E tests
+        working-directory: ./backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_NAME: clarence_db
+          CARRIER_API_BASE_URL: http://localhost:3001/api/v1
+          CARRIER_API_KEY: test_clarence_key_123
+          JWT_SECRET: test_jwt_secret_key_for_ci
+          SMS_MOCK_MODE: true
+        run: npm run test:e2e
+
+      - name: Stop carrier simulator
+        if: always()
+        run: |
+          if [ -f /tmp/carrier-simulator.pid ]; then
+            kill $(cat /tmp/carrier-simulator.pid) || true
+          fi
+          pkill -f "nest start" || true
+
+  backend-build:
+    name: Backend - Build Check
+    runs-on: ubuntu-latest
+    needs: [backend-lint, backend-unit-tests, backend-e2e-tests]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: backend/dist/
+          retention-days: 7
+
+  # ============================================
+  # CARRIER API SIMULATOR CI/CD
+  # ============================================
+  carrier-lint:
+    name: Carrier Simulator - Lint Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: carrier-api-simulator/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./carrier-api-simulator
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./carrier-api-simulator
+        run: npm run lint
+
+  carrier-audit:
+    name: Carrier Simulator - Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: carrier-api-simulator/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./carrier-api-simulator
+        run: npm ci
+
+      - name: Run npm audit
+        working-directory: ./carrier-api-simulator
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Run npm audit (production only)
+        working-directory: ./carrier-api-simulator
+        run: npm audit --production --audit-level=high
+
+  carrier-unit-tests:
+    name: Carrier Simulator - Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: carrier-api-simulator/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./carrier-api-simulator
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: ./carrier-api-simulator
+        run: npm test
+
+      - name: Generate coverage report
+        working-directory: ./carrier-api-simulator
+        run: npm run test:cov
+        if: matrix.node-version == '18'
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.node-version == '18'
+        with:
+          files: ./carrier-api-simulator/coverage/lcov.info
+          flags: carrier-unittests
+          name: carrier-coverage
+        continue-on-error: true
+
+  carrier-e2e-tests:
+    name: Carrier Simulator - E2E Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: carrier-api-simulator/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./carrier-api-simulator
+        run: npm ci
+
+      - name: Run E2E tests
+        working-directory: ./carrier-api-simulator
+        run: npm run test:e2e
+
+  carrier-build:
+    name: Carrier Simulator - Build Check
+    runs-on: ubuntu-latest
+    needs: [carrier-lint, carrier-unit-tests, carrier-e2e-tests]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: carrier-api-simulator/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./carrier-api-simulator
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./carrier-api-simulator
+        run: npm run build
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-dist
+          path: carrier-api-simulator/dist/
+          retention-days: 7
+
+  # ============================================
+  # INTEGRATION TEST
+  # ============================================
+  integration-test:
+    name: Integration Test (Backend + Carrier Simulator)
+    runs-on: ubuntu-latest
+    needs: [backend-build, carrier-build]
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clarence_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install carrier simulator dependencies
+        working-directory: ./carrier-api-simulator
+        run: npm ci
+
+      - name: Build carrier simulator
+        working-directory: ./carrier-api-simulator
+        run: npm run build
+
+      - name: Start carrier simulator
+        working-directory: ./carrier-api-simulator
+        run: |
+          npm start > /tmp/carrier-simulator.log 2>&1 &
+          echo $! > /tmp/carrier-simulator.pid
+          sleep 10
+          for i in {1..30}; do
+            if curl -f -H "X-API-Key: test_clarence_key_123" \
+              http://localhost:3001/api/v1/carriers/reliable_insurance/health > /dev/null 2>&1; then
+              echo "Carrier simulator is ready!"
+              break
+            fi
+            echo "Waiting for carrier simulator... ($i/30)"
+            sleep 2
+          done
+          curl -f -H "X-API-Key: test_clarence_key_123" \
+            http://localhost:3001/api/v1/carriers/reliable_insurance/health || exit 1
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run database migrations
+        working-directory: ./backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_NAME: clarence_db
+        run: npm run migration:run
+
+      - name: Run integration E2E tests
+        working-directory: ./backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_NAME: clarence_db
+          CARRIER_API_BASE_URL: http://localhost:3001/api/v1
+          CARRIER_API_KEY: test_clarence_key_123
+          JWT_SECRET: test_jwt_secret_key_for_ci
+          SMS_MOCK_MODE: true
+        run: npm run test:e2e -- quote-to-policy-flow.e2e-spec.ts
+
+      - name: Stop carrier simulator
+        if: always()
+        run: |
+          if [ -f /tmp/carrier-simulator.pid ]; then
+            kill $(cat /tmp/carrier-simulator.pid) || true
+          fi
+          pkill -f "nest start" || true
+
+  # ============================================
+  # FINAL STATUS CHECK
+  # ============================================
+  all-checks-passed:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [
+      backend-lint,
+      backend-audit,
+      backend-unit-tests,
+      backend-e2e-tests,
+      backend-build,
+      carrier-lint,
+      carrier-audit,
+      carrier-unit-tests,
+      carrier-e2e-tests,
+      carrier-build,
+      integration-test
+    ]
+    if: always()
+    
+    steps:
+      - name: Check if all jobs passed
+        run: |
+          if [[ "${{ needs.backend-lint.result }}" != "success" ]] || \
+             [[ "${{ needs.backend-audit.result }}" != "success" ]] || \
+             [[ "${{ needs.backend-unit-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.backend-e2e-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.backend-build.result }}" != "success" ]] || \
+             [[ "${{ needs.carrier-lint.result }}" != "success" ]] || \
+             [[ "${{ needs.carrier-audit.result }}" != "success" ]] || \
+             [[ "${{ needs.carrier-unit-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.carrier-e2e-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.carrier-build.result }}" != "success" ]] || \
+             [[ "${{ needs.integration-test.result }}" != "success" ]]; then
+            echo "❌ One or more checks failed!"
+            exit 1
+          fi
+          echo "✅ All checks passed successfully!"
+
