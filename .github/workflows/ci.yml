@@ -193,7 +193,6 @@ jobs:
           done
           curl -f -H "X-API-Key: test_clarence_key_123" \
             http://localhost:3001/api/v1/carriers/reliable_insurance/health || (cat /tmp/carrier-simulator.log && exit 1)
-
       - name: Run E2E tests
         working-directory: ./backend
         env:
@@ -219,7 +218,6 @@ jobs:
             kill $(cat /tmp/carrier-simulator.pid) || true
           fi
           cat /tmp/carrier-simulator.log || true
-
   backend-build:
     name: Backend - Build Check
     runs-on: ubuntu-latest
@@ -276,7 +274,6 @@ jobs:
         run: |
           timeout 5 npm start || true
           echo "Carrier simulator syntax check passed"
-
       - name: Run npm audit
         working-directory: ./carrier-api-simulator
         run: npm audit --audit-level=high
@@ -346,7 +343,6 @@ jobs:
           done
           curl -f -H "X-API-Key: test_clarence_key_123" \
             http://localhost:3001/api/v1/carriers/reliable_insurance/health || (cat /tmp/carrier-simulator.log && exit 1)
-
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
@@ -398,7 +394,6 @@ jobs:
             kill $(cat /tmp/carrier-simulator.pid) || true
           fi
           cat /tmp/carrier-simulator.log || true
-
   # ============================================
   # FINAL STATUS CHECK
   # ============================================
@@ -430,4 +425,3 @@ jobs:
             exit 1
           fi
           echo "✅ All checks passed successfully!"
-
