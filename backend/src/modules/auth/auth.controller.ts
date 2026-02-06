@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtRefreshPayload } from '../../common/interfaces';
 import { CheckPhoneDto, CheckPhoneResponseDto } from './dto/check-phone.dto';
 import {
   SendVerificationCodeDto,
@@ -80,7 +81,7 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   async refreshToken(
     @Body() dto: RefreshTokenDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtRefreshPayload,
   ): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(
       dto.refreshToken,

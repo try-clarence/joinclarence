@@ -12,8 +12,8 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RedisService } from '../redis/redis.service';
 import { SmsService } from '../sms/sms.service';
-import { VerificationPurpose } from './dto/send-verification-code.dto';
-import { User, AccountStatus } from '../users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
+import { AccountStatus, VerificationPurpose } from '@/common/enums';
 
 describe('AuthService', () => {
   let service: AuthService;

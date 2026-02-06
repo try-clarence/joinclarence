@@ -2,21 +2,85 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from './redis.service';
 
+// Create mock store outside the mock factory
+const mockStore = new Map<string, { value: string; expiresAt?: number }>();
+
+// Mock ioredis with proper default export
+jest.mock('ioredis', () => {
+  const MockRedis = jest.fn().mockImplementation(() => ({
+    get: jest.fn((key: string) => {
+      const entry = mockStore.get(key);
+      if (!entry) return Promise.resolve(null);
+      if (entry.expiresAt && Date.now() > entry.expiresAt) {
+        mockStore.delete(key);
+        return Promise.resolve(null);
+      }
+      return Promise.resolve(entry.value);
+    }),
+    set: jest.fn((key: string, value: string) => {
+      mockStore.set(key, { value });
+      return Promise.resolve('OK');
+    }),
+    setex: jest.fn((key: string, ttl: number, value: string) => {
+      mockStore.set(key, { value, expiresAt: Date.now() + ttl * 1000 });
+      return Promise.resolve('OK');
+    }),
+    del: jest.fn((key: string) => {
+      mockStore.delete(key);
+      return Promise.resolve(1);
+    }),
+    incr: jest.fn((key: string) => {
+      const entry = mockStore.get(key);
+      const newValue = entry ? parseInt(entry.value, 10) + 1 : 1;
+      mockStore.set(key, {
+        value: newValue.toString(),
+        expiresAt: entry?.expiresAt,
+      });
+      return Promise.resolve(newValue);
+    }),
+    expire: jest.fn((key: string, ttl: number) => {
+      const entry = mockStore.get(key);
+      if (entry) {
+        entry.expiresAt = Date.now() + ttl * 1000;
+      }
+      return Promise.resolve(1);
+    }),
+    exists: jest.fn((key: string) => {
+      const entry = mockStore.get(key);
+      if (!entry) return Promise.resolve(0);
+      if (entry.expiresAt && Date.now() > entry.expiresAt) {
+        mockStore.delete(key);
+        return Promise.resolve(0);
+      }
+      return Promise.resolve(1);
+    }),
+    disconnect: jest.fn(),
+  }));
+
+  return {
+    __esModule: true,
+    default: MockRedis,
+  };
+});
+
 describe('RedisService', () => {
   let service: RedisService;
 
   const mockConfigService = {
     get: jest.fn((key: string, defaultValue?: any) => {
-      const config = {
+      const config: Record<string, any> = {
         REDIS_HOST: 'localhost',
         REDIS_PORT: 6379,
         REDIS_PASSWORD: undefined,
       };
-      return config[key] || defaultValue;
+      return config[key] !== undefined ? config[key] : defaultValue;
     }),
   };
 
   beforeEach(async () => {
+    // Clear the mock store before each test
+    mockStore.clear();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RedisService,
@@ -146,12 +210,9 @@ describe('RedisService', () => {
     });
   });
 
-  afterAll(async () => {
-    // Cleanup
-    await service.del('test-key');
-    await service.del('json-key');
-    await service.del('complex-key');
-    await service.del('counter');
-    service.onModuleDestroy();
+  afterEach(() => {
+    if (service) {
+      service.onModuleDestroy();
+    }
   });
 });

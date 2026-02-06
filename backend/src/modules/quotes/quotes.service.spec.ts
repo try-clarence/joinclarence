@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QuotesService } from './quotes.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import {
-  QuoteRequest,
-  QuoteRequestStatus,
-} from './entities/quote-request.entity';
+import { QuoteRequest } from './entities/quote-request.entity';
 import { QuoteRequestCoverage } from './entities/quote-request-coverage.entity';
 import { CarriersService } from '../carriers/carriers.service';
+import { CoverageType, QuoteRequestStatus } from '@/common/enums';
+import { IsNull } from 'typeorm';
 
 describe('QuotesService', () => {
   let service: QuotesService;
@@ -17,7 +16,6 @@ describe('QuotesService', () => {
 
   const mockQuoteRequest: Partial<QuoteRequest> = {
     id: 'quote-123',
-    sessionId: 'session-123',
     insuranceType: 'commercial' as any,
     requestType: 'new_coverage' as any,
     status: QuoteRequestStatus.DRAFT,
@@ -31,12 +29,14 @@ describe('QuotesService', () => {
     contactLastName: 'Doe',
     contactEmail: 'john@test.com',
     contactPhone: '+15551234567',
+    createdAt: new Date(),
   };
 
   beforeEach(async () => {
     const mockQuoteRequestRepository = {
       create: jest.fn(),
       save: jest.fn(),
+      find: jest.fn(),
       findOne: jest.fn(),
       update: jest.fn(),
     };
@@ -87,50 +87,31 @@ describe('QuotesService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('createQuoteRequest', () => {
-    it('should create a new quote request with status DRAFT', async () => {
-      const createDto = {
-        sessionId: 'session-123',
-        insuranceType: 'commercial',
-        requestType: 'new_coverage',
-        legalBusinessName: 'Test Corp',
-        contactEmail: 'test@test.com',
-      } as any;
+  describe('getAllQuoteRequests', () => {
+    it('should return all quote requests ordered by createdAt DESC', async () => {
+      const mockQuotes = [
+        { ...mockQuoteRequest, id: 'quote-1' },
+        { ...mockQuoteRequest, id: 'quote-2' },
+      ];
 
-      quoteRequestRepository.save.mockResolvedValue({
-        ...mockQuoteRequest,
-        status: QuoteRequestStatus.DRAFT,
+      quoteRequestRepository.find.mockResolvedValue(mockQuotes);
+
+      const result = await service.getAllQuoteRequests();
+
+      expect(result).toEqual(mockQuotes);
+      expect(quoteRequestRepository.find).toHaveBeenCalledWith({
+        where: { deletedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+        take: 100,
       });
-
-      const result = await service.createQuoteRequest(createDto);
-
-      expect(result.status).toBe(QuoteRequestStatus.DRAFT);
-      expect(quoteRequestRepository.save).toHaveBeenCalled();
-    });
-  });
-
-  describe('updateQuoteRequest', () => {
-    it('should update an existing quote request', async () => {
-      quoteRequestRepository.findOne.mockResolvedValue(mockQuoteRequest);
-      quoteRequestRepository.save.mockResolvedValue({
-        ...mockQuoteRequest,
-        legalBusinessName: 'Updated Corp',
-      });
-
-      const result = await service.updateQuoteRequest(mockQuoteRequest.id, {
-        legalBusinessName: 'Updated Corp',
-      });
-
-      expect(result.legalBusinessName).toBe('Updated Corp');
-      expect(quoteRequestRepository.save).toHaveBeenCalled();
     });
 
-    it('should throw error if quote request not found', async () => {
-      quoteRequestRepository.findOne.mockResolvedValue(null);
+    it('should return empty array when no quote requests exist', async () => {
+      quoteRequestRepository.find.mockResolvedValue([]);
 
-      await expect(
-        service.updateQuoteRequest('invalid-id', {}),
-      ).rejects.toThrow('Quote request not found');
+      const result = await service.getAllQuoteRequests();
+
+      expect(result).toEqual([]);
     });
   });
 
@@ -147,7 +128,10 @@ describe('QuotesService', () => {
       quoteRequestCoveragesRepository.save.mockResolvedValue(coverages);
 
       const result = await service.selectCoverages(mockQuoteRequest.id, {
-        selectedCoverages: ['general_liability', 'professional_liability'],
+        selectedCoverages: [
+          CoverageType.GENERAL_LIABILITY,
+          CoverageType.PROFESSIONAL_LIABILITY,
+        ],
       });
 
       expect(result.length).toBe(2);
@@ -252,9 +236,8 @@ describe('QuotesService', () => {
 
       expect(result).toHaveProperty('quoteRequest');
       expect(result).toHaveProperty('coverages');
-      expect(result).toHaveProperty('quotes');
+      expect(result).toHaveProperty('options');
       expect(result.coverages.length).toBe(1);
-      expect(result.quotes.length).toBe(1);
     });
 
     it('should throw error if quote request not found', async () => {
@@ -266,25 +249,211 @@ describe('QuotesService', () => {
     });
   });
 
-  describe('getQuoteRequestBySession', () => {
-    it('should return quote request by session ID', async () => {
+  describe('getInsuranceOptions', () => {
+    it('should return insurance options transformed from carrier quotes', async () => {
       quoteRequestRepository.findOne.mockResolvedValue(mockQuoteRequest);
 
-      const result = await service.getQuoteRequestBySession('session-123');
+      const carrierQuotes = [
+        {
+          id: 'carrier-quote-1',
+          status: 'quoted',
+          annualPremium: 1200,
+          monthlyPremium: 105,
+          quarterlyPremium: 310,
+          coverageType: 'general_liability',
+          coverageLimits: { per_occurrence: 1000000 },
+          deductible: 500,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(),
+          carrier: { carrierName: 'Test Carrier' },
+        },
+        {
+          id: 'carrier-quote-2',
+          status: 'quoted',
+          annualPremium: 1500,
+          monthlyPremium: 130,
+          quarterlyPremium: 390,
+          coverageType: 'general_liability',
+          coverageLimits: { per_occurrence: 2000000 },
+          deductible: 1000,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(),
+          carrier: { carrierName: 'Another Carrier' },
+        },
+      ];
 
-      expect(result).toEqual(mockQuoteRequest);
-      expect(quoteRequestRepository.findOne).toHaveBeenCalledWith({
-        where: { sessionId: 'session-123' },
-        order: { createdAt: 'DESC' },
-      });
+      carriersService.getQuotesForRequest.mockResolvedValue(carrierQuotes);
+
+      const result = await service.getInsuranceOptions(mockQuoteRequest.id);
+
+      expect(result).toHaveProperty('options');
+      expect(result).toHaveProperty('quoteId', mockQuoteRequest.id);
+      expect(result.options.length).toBe(2);
+
+      // First option should be popular choice (lowest price)
+      expect(result.options[0].popularChoice).toBe(true);
+      expect(result.options[0].annualPremium).toBe(1200);
+
+      // Second option should be best value / recommended
+      expect(result.options[1].bestValue).toBe(true);
+      expect(result.options[1].recommended).toBe(true);
+    });
+
+    it('should filter out declined quotes', async () => {
+      quoteRequestRepository.findOne.mockResolvedValue(mockQuoteRequest);
+
+      const carrierQuotes = [
+        {
+          id: 'carrier-quote-1',
+          status: 'quoted',
+          annualPremium: 1200,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(),
+          carrier: { carrierName: 'Test Carrier' },
+        },
+        {
+          id: 'carrier-quote-2',
+          status: 'declined',
+          declineReason: 'Risk too high',
+          carrier: { carrierName: 'Another Carrier' },
+        },
+      ];
+
+      carriersService.getQuotesForRequest.mockResolvedValue(carrierQuotes);
+
+      const result = await service.getInsuranceOptions(mockQuoteRequest.id);
+
+      expect(result.options.length).toBe(1);
+      expect(result.options[0].id).toBe('carrier-quote-1');
     });
 
     it('should throw error if quote request not found', async () => {
       quoteRequestRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.getQuoteRequestBySession('invalid-session'),
-      ).rejects.toThrow('Quote request not found');
+      await expect(service.getInsuranceOptions('invalid-id')).rejects.toThrow(
+        'Quote request not found',
+      );
+    });
+  });
+
+  describe('submitCompleteQuote', () => {
+    const validSubmitDto = {
+      insuranceType: 'commercial',
+      requestType: 'new_business',
+      legalBusinessName: 'Test Corp',
+      industry: 'Technology',
+      streetAddress: '123 Test St',
+      city: 'San Francisco',
+      state: 'CA',
+      zipCode: '94105',
+      contactFirstName: 'John',
+      contactLastName: 'Doe',
+      contactEmail: 'john@test.com',
+      contactPhone: '+15551234567',
+      selectedCoverages: ['general_liability', 'professional_liability'],
+    } as any;
+
+    it('should create quote, add coverages, and submit in one call', async () => {
+      const savedQuoteRequest = {
+        ...mockQuoteRequest,
+        id: 'new-quote-123',
+        status: QuoteRequestStatus.SUBMITTED,
+        submittedAt: expect.any(Date),
+      };
+
+      quoteRequestRepository.save.mockResolvedValue(savedQuoteRequest);
+      quoteRequestCoveragesRepository.create.mockImplementation((data) => data);
+      quoteRequestCoveragesRepository.save.mockResolvedValue([
+        { coverageType: 'general_liability', isSelected: true },
+        { coverageType: 'professional_liability', isSelected: true },
+      ]);
+      carriersService.requestQuotesFromAllCarriers.mockResolvedValue([]);
+
+      const result = await service.submitCompleteQuote(validSubmitDto);
+
+      // Status could be SUBMITTED or PROCESSING (async processing starts immediately)
+      expect([
+        QuoteRequestStatus.SUBMITTED,
+        QuoteRequestStatus.PROCESSING,
+      ]).toContain(result.status);
+      expect(quoteRequestRepository.save).toHaveBeenCalled();
+      expect(quoteRequestCoveragesRepository.save).toHaveBeenCalled();
+    });
+
+    it('should create coverages for all selected coverage types', async () => {
+      const savedQuoteRequest = {
+        ...mockQuoteRequest,
+        id: 'new-quote-123',
+        status: QuoteRequestStatus.SUBMITTED,
+      };
+
+      quoteRequestRepository.save.mockResolvedValue(savedQuoteRequest);
+      quoteRequestCoveragesRepository.create.mockImplementation((data) => data);
+      quoteRequestCoveragesRepository.save.mockResolvedValue([]);
+      carriersService.requestQuotesFromAllCarriers.mockResolvedValue([]);
+
+      await service.submitCompleteQuote(validSubmitDto);
+
+      // Verify create was called for each coverage
+      expect(quoteRequestCoveragesRepository.create).toHaveBeenCalledTimes(2);
+      expect(quoteRequestCoveragesRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverageType: 'general_liability',
+          isSelected: true,
+        }),
+      );
+      expect(quoteRequestCoveragesRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coverageType: 'professional_liability',
+          isSelected: true,
+        }),
+      );
+    });
+
+    it('should trigger carrier API calls asynchronously', async () => {
+      const savedQuoteRequest = {
+        ...mockQuoteRequest,
+        id: 'new-quote-123',
+        status: QuoteRequestStatus.SUBMITTED,
+      };
+
+      quoteRequestRepository.save.mockResolvedValue(savedQuoteRequest);
+      quoteRequestCoveragesRepository.create.mockImplementation((data) => data);
+      quoteRequestCoveragesRepository.save.mockResolvedValue([]);
+      carriersService.requestQuotesFromAllCarriers.mockResolvedValue([
+        { id: 'carrier-quote-1', annualPremium: 1200 },
+      ]);
+
+      await service.submitCompleteQuote(validSubmitDto);
+
+      // Wait for async processing
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(carriersService.requestQuotesFromAllCarriers).toHaveBeenCalled();
+    });
+
+    it('should fail validation if required fields are missing', async () => {
+      const incompleteDto = {
+        insuranceType: 'commercial',
+        requestType: 'new_business',
+        legalBusinessName: 'Test Corp',
+        // Missing: industry, address, contact
+        selectedCoverages: ['general_liability'],
+      } as any;
+
+      const incompleteQuoteRequest = {
+        ...incompleteDto,
+        id: 'new-quote-123',
+        status: QuoteRequestStatus.DRAFT,
+      };
+
+      quoteRequestRepository.save.mockResolvedValue(incompleteQuoteRequest);
+      quoteRequestCoveragesRepository.create.mockImplementation((data) => data);
+      quoteRequestCoveragesRepository.save.mockResolvedValue([]);
+
+      await expect(service.submitCompleteQuote(incompleteDto)).rejects.toThrow(
+        'Missing required fields',
+      );
     });
   });
 });

@@ -1,16 +1,11 @@
+import { CarrierHealthStatus, CoverageType } from '@/common/enums';
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum CarrierHealthStatus {
-  OPERATIONAL = 'operational',
-  DEGRADED = 'degraded',
-  DOWN = 'down',
-}
 
 @Entity('carriers')
 export class Carrier {
@@ -42,7 +37,7 @@ export class Carrier {
   supportsCommercial: boolean;
 
   @Column({ name: 'supported_coverages', type: 'jsonb', nullable: true })
-  supportedCoverages: string[];
+  supportedCoverages: CoverageType[];
 
   // Health check
   @Column({ name: 'last_health_check', type: 'timestamp', nullable: true })

@@ -8,9 +8,13 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const corsRegex = new RegExp(
+    process.env.CORS_ORIGIN || 'http://localhost:3002',
+  );
+
   // Enable CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    origin: corsRegex,
     credentials: true,
   });
 

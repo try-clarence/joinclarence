@@ -1,10 +1,6 @@
+import { VerificationPurpose } from '@/common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Matches, IsEnum, IsOptional } from 'class-validator';
-
-export enum VerificationPurpose {
-  REGISTRATION = 'registration',
-  PASSWORD_RESET = 'password-reset',
-}
 
 export class SendVerificationCodeDto {
   @ApiProperty({ example: '+14155551234' })
@@ -16,6 +12,7 @@ export class SendVerificationCodeDto {
 
   @ApiProperty({
     enum: VerificationPurpose,
+    enumName: 'VerificationPurpose',
     default: VerificationPurpose.REGISTRATION,
   })
   @IsEnum(VerificationPurpose)

@@ -1,14 +1,17 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { Carrier, CarrierHealthStatus } from './entities/carrier.entity';
 import {
-  CarrierQuote,
+  CarrierHealthStatus,
   CarrierQuoteStatus,
-} from './entities/carrier-quote.entity';
+  CoverageType,
+  normalizeCoverageType,
+} from '@/common/enums';
+import { HttpService } from '@nestjs/axios';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { firstValueFrom } from 'rxjs';
+import { Repository } from 'typeorm';
 import { CarrierQuoteRequestDto } from './dto/quote-request.dto';
+import { CarrierQuote } from './entities/carrier-quote.entity';
+import { Carrier } from './entities/carrier.entity';
 
 interface CarrierApiQuoteResponse {
   quote_id: string;
@@ -79,11 +82,23 @@ export class CarriersService {
    */
   async findCarriersForCoverages(
     insuranceType: string,
-    coverageTypes: string[],
+    coverageTypes: (CoverageType | string)[],
   ): Promise<Carrier[]> {
     const carriers = await this.findActiveCarriers();
 
-    return carriers.filter((carrier) => {
+    // Normalize all coverage types to ensure consistent format
+    const normalizedCoverageTypes = coverageTypes
+      .map((ct) => normalizeCoverageType(ct))
+      .filter((ct): ct is CoverageType => ct !== null);
+
+    if (normalizedCoverageTypes.length === 0) {
+      this.logger.warn(
+        `No valid coverage types found after normalization. Original types: ${coverageTypes.join(', ')}`,
+      );
+      return carriers; // Return all carriers if no valid coverage types
+    }
+
+    const filteredCarriers = carriers.filter((carrier) => {
       // Check if carrier supports the insurance type
       const supportsType =
         insuranceType === 'commercial'
@@ -94,10 +109,17 @@ export class CarriersService {
 
       // Check if carrier supports at least one of the requested coverages
       const supportedCoverages = carrier.supportedCoverages || [];
-      return coverageTypes.some((coverage) =>
+
+      return normalizedCoverageTypes.some((coverage) =>
         supportedCoverages.includes(coverage),
       );
     });
+
+    this.logger.log(
+      `Found ${filteredCarriers.length} carriers supporting coverages: ${normalizedCoverageTypes.join(', ')}`,
+    );
+
+    return filteredCarriers;
   }
 
   /**
@@ -120,6 +142,10 @@ export class CarriersService {
       throw new HttpException('Carrier is not active', HttpStatus.BAD_REQUEST);
     }
 
+    console.log({
+      carrier,
+    });
+
     this.logger.log(
       `Requesting quotes from ${carrier.carrierName} for ${requestData.selectedCoverages.length} coverages`,
     );
@@ -128,8 +154,12 @@ export class CarriersService {
     const startTime = Date.now();
 
     try {
-      // Request quotes for each selected coverage
-      for (const coverageType of requestData.selectedCoverages) {
+      // Normalize coverage types using the enum normalization function
+      const selectedCoverages = requestData.selectedCoverages
+        .map((coverageType) => normalizeCoverageType(coverageType))
+        .filter((ct): ct is CoverageType => ct !== null);
+
+      for (const coverageType of selectedCoverages) {
         // Only request if carrier supports this coverage
         if (!carrier.supportedCoverages?.includes(coverageType)) {
           this.logger.warn(
@@ -177,7 +207,7 @@ export class CarriersService {
     carrier: Carrier,
     quoteRequestId: string,
     requestData: CarrierQuoteRequestDto,
-    coverageType: string,
+    coverageType: CoverageType,
   ): Promise<CarrierQuote> {
     const startTime = Date.now();
 
@@ -301,6 +331,10 @@ export class CarriersService {
         },
       ),
     );
+
+    console.log({
+      quotePromises,
+    });
 
     const results = await Promise.all(quotePromises);
 
@@ -488,7 +522,7 @@ export class CarriersService {
    */
   private buildCarrierApiRequest(
     requestData: CarrierQuoteRequestDto,
-    coverageType: string,
+    coverageType: CoverageType,
   ): any {
     // Get effective date - default to 30 days from now
     const effectiveDate = new Date();

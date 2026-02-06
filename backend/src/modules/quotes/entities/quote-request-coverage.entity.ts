@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { QuoteRequest } from './quote-request.entity';
+import { CoverageType } from '@/common/enums';
 
 @Entity('quote_request_coverages')
 export class QuoteRequestCoverage {
@@ -21,7 +22,7 @@ export class QuoteRequestCoverage {
   quoteRequest: QuoteRequest;
 
   @Column({ name: 'coverage_type', length: 50 })
-  coverageType: string;
+  coverageType: CoverageType;
 
   @Column({ name: 'is_selected', default: false })
   isSelected: boolean;

@@ -1,9 +1,7 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import {
-  Carrier,
-  CarrierHealthStatus,
-} from '../modules/carriers/entities/carrier.entity';
+import { Carrier } from '../modules/carriers/entities/carrier.entity';
+import { CarrierHealthStatus, CoverageType } from '../common/enums';
 
 config();
 
@@ -19,12 +17,12 @@ const carriers = [
     supportsPersonal: true,
     supportsCommercial: true,
     supportedCoverages: [
-      'general_liability',
-      'professional_liability',
-      'workers_compensation',
-      'commercial_auto',
-      'cyber_liability',
-      'employment_practices_liability',
+      CoverageType.GENERAL_LIABILITY,
+      CoverageType.PROFESSIONAL_LIABILITY,
+      CoverageType.WORKERS_COMPENSATION,
+      CoverageType.COMMERCIAL_AUTO,
+      CoverageType.CYBER_LIABILITY,
+      CoverageType.EMPLOYMENT_PRACTICES_LIABILITY,
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -39,10 +37,10 @@ const carriers = [
     supportsPersonal: true,
     supportsCommercial: true,
     supportedCoverages: [
-      'professional_liability',
-      'cyber_liability',
-      'employment_practices_liability',
-      'directors_officers',
+      CoverageType.PROFESSIONAL_LIABILITY,
+      CoverageType.CYBER_LIABILITY,
+      CoverageType.EMPLOYMENT_PRACTICES_LIABILITY,
+      CoverageType.DIRECTORS_OFFICERS,
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -57,14 +55,14 @@ const carriers = [
     supportsPersonal: true,
     supportsCommercial: true,
     supportedCoverages: [
-      'general_liability',
-      'professional_liability',
-      'workers_compensation',
-      'commercial_auto',
-      'cyber_liability',
-      'employment_practices_liability',
-      'directors_officers',
-      'business_owners_policy',
+      CoverageType.GENERAL_LIABILITY,
+      CoverageType.PROFESSIONAL_LIABILITY,
+      CoverageType.WORKERS_COMPENSATION,
+      CoverageType.COMMERCIAL_AUTO,
+      CoverageType.CYBER_LIABILITY,
+      CoverageType.EMPLOYMENT_PRACTICES_LIABILITY,
+      CoverageType.DIRECTORS_OFFICERS,
+      CoverageType.BUSINESS_OWNERS_POLICY,
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },
@@ -79,9 +77,9 @@ const carriers = [
     supportsPersonal: true,
     supportsCommercial: true,
     supportedCoverages: [
-      'general_liability',
-      'professional_liability',
-      'business_owners_policy',
+      CoverageType.GENERAL_LIABILITY,
+      CoverageType.PROFESSIONAL_LIABILITY,
+      CoverageType.BUSINESS_OWNERS_POLICY,
     ],
     healthStatus: CarrierHealthStatus.OPERATIONAL,
   },

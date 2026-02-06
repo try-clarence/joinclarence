@@ -13,13 +13,12 @@ import { UsersService } from '../users/users.service';
 import { RedisService } from '../redis/redis.service';
 import { SmsService } from '../sms/sms.service';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  SendVerificationCodeDto,
-  VerificationPurpose,
-} from './dto/send-verification-code.dto';
+
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerificationPurpose } from '@/common/enums';
+import { SendVerificationCodeDto } from './dto/send-verification-code.dto';
 
 interface VerificationSession {
   phone: string;

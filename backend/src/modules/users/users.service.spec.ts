@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
-import { User, AccountStatus } from './entities/user.entity';
+import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { AccountStatus } from '@/common/enums';
 
 jest.mock('bcrypt');
 

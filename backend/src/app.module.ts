@@ -10,6 +10,7 @@ import { FileStorageModule } from './modules/file-storage/file-storage.module';
 import { CarriersModule } from './modules/carriers/carriers.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { PoliciesModule } from './modules/policies/policies.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PoliciesModule } from './modules/policies/policies.module';
     CarriersModule,
     QuotesModule,
     PoliciesModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

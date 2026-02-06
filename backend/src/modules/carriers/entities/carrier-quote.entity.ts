@@ -8,13 +8,12 @@ import {
 } from 'typeorm';
 import { Carrier } from './carrier.entity';
 import { QuoteRequest } from '../../quotes/entities/quote-request.entity';
-
-export enum CarrierQuoteStatus {
-  QUOTED = 'quoted',
-  DECLINED = 'declined',
-  REFERRED = 'referred',
-  EXPIRED = 'expired',
-}
+import {
+  CarrierQuoteStatus,
+  CoverageType,
+  InsuranceType,
+} from '@/common/enums';
+import { CoverageLimits, OptionalCoverage } from '@/common/types';
 
 @Entity('carrier_quotes')
 export class CarrierQuote {
@@ -40,7 +39,7 @@ export class CarrierQuote {
   carrierQuoteId: string;
 
   @Column({ name: 'carrier_response', type: 'jsonb' })
-  carrierResponse: any;
+  carrierResponse: object;
 
   // Quote Summary
   @Column({
@@ -50,10 +49,10 @@ export class CarrierQuote {
   status: CarrierQuoteStatus;
 
   @Column({ name: 'coverage_type', length: 50 })
-  coverageType: string;
+  coverageType: CoverageType;
 
-  @Column({ name: 'insurance_type', length: 20, nullable: true })
-  insuranceType: string;
+  @Column({ name: 'insurance_type', type: 'enum', enum: InsuranceType })
+  insuranceType: InsuranceType;
 
   // Premium
   @Column({
@@ -94,7 +93,7 @@ export class CarrierQuote {
 
   // Coverage Details
   @Column({ name: 'coverage_limits', type: 'jsonb', nullable: true })
-  coverageLimits: any;
+  coverageLimits: CoverageLimits;
 
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: true })
   deductible: number;
@@ -116,7 +115,7 @@ export class CarrierQuote {
   exclusions: string[];
 
   @Column({ name: 'optional_coverages', type: 'jsonb', nullable: true })
-  optionalCoverages: any[];
+  optionalCoverages: OptionalCoverage[];
 
   @Column({ name: 'underwriting_notes', type: 'jsonb', nullable: true })
   underwritingNotes: string[];

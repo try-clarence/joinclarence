@@ -11,20 +11,14 @@ import { User } from '../../users/entities/user.entity';
 import { QuoteRequest } from '../../quotes/entities/quote-request.entity';
 import { CarrierQuote } from '../../carriers/entities/carrier-quote.entity';
 import { Carrier } from '../../carriers/entities/carrier.entity';
-
-export enum PolicyStatus {
-  BOUND = 'bound',
-  ACTIVE = 'active',
-  CANCELLED = 'cancelled',
-  EXPIRED = 'expired',
-  PENDING_CANCELLATION = 'pending_cancellation',
-}
-
-export enum PaymentPlan {
-  ANNUAL = 'annual',
-  MONTHLY = 'monthly',
-  QUARTERLY = 'quarterly',
-}
+import {
+  CoverageType,
+  InsuranceType,
+  PaymentPlan,
+  PolicyStatus,
+} from '@/common/enums';
+import { CoverageLimits } from '@/common/types';
+import { CarrierContactInfoDto } from '../dto/policy-response.dto';
 
 @Entity('policies')
 export class Policy {
@@ -71,10 +65,10 @@ export class Policy {
 
   // Policy Details
   @Column({ name: 'insurance_type', length: 20 })
-  insuranceType: string;
+  insuranceType: InsuranceType;
 
   @Column({ name: 'coverage_type', length: 50 })
-  coverageType: string;
+  coverageType: CoverageType;
 
   @Column({
     type: 'enum',
@@ -85,7 +79,7 @@ export class Policy {
 
   // Coverage & Premium
   @Column({ name: 'coverage_limits', type: 'jsonb' })
-  coverageLimits: any;
+  coverageLimits: CoverageLimits;
 
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   deductible: number;
@@ -154,15 +148,18 @@ export class Policy {
 
   // Carrier Contact
   @Column({ name: 'carrier_contact_info', type: 'jsonb', nullable: true })
-  carrierContactInfo: any;
+  carrierContactInfo: CarrierContactInfoDto;
 
   // Full carrier response
   @Column({ name: 'carrier_policy_data', type: 'jsonb', nullable: true })
-  carrierPolicyData: any;
+  carrierPolicyData: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
 }

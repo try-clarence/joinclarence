@@ -7,17 +7,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export enum InsuranceType {
-  COMMERCIAL = 'commercial',
-  PERSONAL = 'personal',
-}
-
-export enum RequestType {
-  NEW_BUSINESS = 'new_business',
-  RENEWAL = 'renewal',
-  QUOTE_ONLY = 'quote_only',
-}
+import { CoverageType, InsuranceType, RequestType } from '@/common/enums';
 
 export class BusinessInfoDto {
   @IsString()
@@ -151,8 +141,8 @@ export class CarrierQuoteRequestDto {
   contact: ContactInfoDto;
 
   @IsArray()
-  @IsString({ each: true })
-  selectedCoverages: string[];
+  @IsEnum(CoverageType, { each: true })
+  selectedCoverages: CoverageType[];
 
   @IsOptional()
   @IsString()

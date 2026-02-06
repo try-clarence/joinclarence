@@ -5,34 +5,17 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-
-export enum QuoteRequestStatus {
-  DRAFT = 'draft',
-  SUBMITTED = 'submitted',
-  PROCESSING = 'processing',
-  QUOTES_READY = 'quotes_ready',
-  QUOTE_SELECTED = 'quote_selected',
-  PURCHASED = 'purchased',
-  EXPIRED = 'expired',
-}
-
-export enum InsuranceType {
-  PERSONAL = 'personal',
-  COMMERCIAL = 'commercial',
-}
-
-export enum RequestType {
-  NEW_COVERAGE = 'new_coverage',
-  RENEWAL = 'renewal',
-}
-
-export enum AddressType {
-  PHYSICAL = 'physical',
-  VIRTUAL = 'virtual',
-}
+import { QuoteRequestCoverage } from './quote-request-coverage.entity';
+import {
+  AddressType,
+  InsuranceType,
+  QuoteRequestStatus,
+  RequestType,
+} from '@/common/enums';
 
 @Entity('quote_requests')
 export class QuoteRequest {
@@ -46,7 +29,10 @@ export class QuoteRequest {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'session_id', length: 100 })
+  @OneToMany(() => QuoteRequestCoverage, (coverage) => coverage.quoteRequest)
+  coverages: QuoteRequestCoverage[];
+
+  @Column({ name: 'session_id', length: 100, nullable: true })
   sessionId: string;
 
   @Column({
@@ -242,4 +228,7 @@ export class QuoteRequest {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
 }

@@ -7,6 +7,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { CoverageType } from '@/common/enums';
 
 describe('CarriersService', () => {
   let service: CarriersService;
@@ -23,7 +24,10 @@ describe('CarriersService', () => {
     apiKeyEncrypted: 'test_key',
     isActive: true,
     supportsCommercial: true,
-    supportedCoverages: ['general_liability', 'professional_liability'],
+    supportedCoverages: [
+      CoverageType.GENERAL_LIABILITY,
+      CoverageType.PROFESSIONAL_LIABILITY,
+    ],
   };
 
   const mockCarrierQuoteResponse = {

@@ -6,10 +6,18 @@ import { Policy } from './entities/policy.entity';
 import { CarriersModule } from '../carriers/carriers.module';
 import { CarrierQuote } from '../carriers/entities/carrier-quote.entity';
 import { QuoteRequest } from '../quotes/entities/quote-request.entity';
+import { Payment } from '../payments/entities/payment.entity';
+import { QuoteRequestCoverage } from '../quotes/entities/quote-request-coverage.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Policy, CarrierQuote, QuoteRequest]),
+    TypeOrmModule.forFeature([
+      Policy,
+      CarrierQuote,
+      QuoteRequest,
+      Payment,
+      QuoteRequestCoverage,
+    ]),
     CarriersModule,
   ],
   controllers: [PoliciesController],

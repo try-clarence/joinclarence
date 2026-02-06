@@ -5,6 +5,8 @@ import {
   UseInterceptors,
   BadRequestException,
   PayloadTooLargeException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
@@ -19,6 +21,7 @@ export class DocumentParsingController {
   ) {}
 
   @Post('parse-decpage')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Parse DEC page or business document' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
