@@ -1,0 +1,18 @@
+{
+  "name": "carrier-api-simulator",
+  "version": "1.0.0",
+  "description": "Simulated carrier API for testing",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "echo 'No linting configured'",
+    "test": "echo 'No tests configured' && exit 0",
+    "test:cov": "echo 'No coverage configured' && exit 0",
+    "test:e2e": "echo 'No e2e tests configured' && exit 0",
+    "build": "echo 'No build step needed for plain JS'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
+  }
+}
