@@ -1,3 +1,4 @@
+import { AccountStatus } from '@/common/enums';
 import {
   Entity,
   Column,
@@ -5,12 +6,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum AccountStatus {
-  ACTIVE = 'active',
-  LOCKED = 'locked',
-  SUSPENDED = 'suspended',
-}
 
 @Entity('users')
 export class User {
@@ -49,4 +44,3 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

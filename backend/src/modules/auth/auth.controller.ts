@@ -11,18 +11,13 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import {
-  CheckPhoneDto,
-  CheckPhoneResponseDto,
-} from './dto/check-phone.dto';
+import { JwtRefreshPayload } from '../../common/interfaces';
+import { CheckPhoneDto, CheckPhoneResponseDto } from './dto/check-phone.dto';
 import {
   SendVerificationCodeDto,
   SendVerificationCodeResponseDto,
 } from './dto/send-verification-code.dto';
-import {
-  VerifyCodeDto,
-  VerifyCodeResponseDto,
-} from './dto/verify-code.dto';
+import { VerifyCodeDto, VerifyCodeResponseDto } from './dto/verify-code.dto';
 import { RegisterDto, AuthResponseDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import {
@@ -46,9 +41,7 @@ export class AuthController {
   @Post('check-phone')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Check if phone number is already registered' })
-  async checkPhone(
-    @Body() dto: CheckPhoneDto,
-  ): Promise<CheckPhoneResponseDto> {
+  async checkPhone(@Body() dto: CheckPhoneDto): Promise<CheckPhoneResponseDto> {
     return this.authService.checkPhone(dto.phone);
   }
 
@@ -88,7 +81,7 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   async refreshToken(
     @Body() dto: RefreshTokenDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtRefreshPayload,
   ): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(
       dto.refreshToken,
@@ -128,4 +121,3 @@ export class AuthController {
     );
   }
 }
-

@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
-import { User, AccountStatus } from './entities/user.entity';
+import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { AccountStatus } from '@/common/enums';
 
 jest.mock('bcrypt');
 
@@ -148,7 +149,10 @@ describe('UsersService', () => {
     it('should return true for valid password', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const result = await service.validatePassword(mockUser, 'correct-password');
+      const result = await service.validatePassword(
+        mockUser,
+        'correct-password',
+      );
 
       expect(result).toBe(true);
       expect(bcrypt.compare).toHaveBeenCalledWith(
@@ -222,4 +226,3 @@ describe('UsersService', () => {
     });
   });
 });
-

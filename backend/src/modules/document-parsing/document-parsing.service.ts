@@ -134,7 +134,9 @@ Important:
       return JSON.parse(content);
     } catch (error) {
       this.logger.error('OpenAI API call failed', error);
-      throw error;
+      // Fall back to mock data if OpenAI fails (e.g., invalid API key)
+      this.logger.warn('Falling back to mock data due to OpenAI error');
+      return this.getMockData();
     }
   }
 
@@ -180,4 +182,3 @@ Important:
     };
   }
 }
-

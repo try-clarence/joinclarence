@@ -17,4 +17,3 @@ export class ForgotPasswordResponseDto {
   @ApiProperty()
   message: string;
 }
-

@@ -11,7 +11,7 @@ export class CreateUsersTable1699999999999 implements MigrationInterface {
             type: 'uuid',
             isPrimary: true,
             generationStrategy: 'uuid',
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'phone',
@@ -71,16 +71,11 @@ export class CreateUsersTable1699999999999 implements MigrationInterface {
     );
 
     // Create indexes
-    await queryRunner.query(
-      `CREATE INDEX idx_users_phone ON users(phone)`,
-    );
-    await queryRunner.query(
-      `CREATE INDEX idx_users_email ON users(email)`,
-    );
+    await queryRunner.query(`CREATE INDEX idx_users_phone ON users(phone)`);
+    await queryRunner.query(`CREATE INDEX idx_users_email ON users(email)`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropTable('users');
   }
 }
-

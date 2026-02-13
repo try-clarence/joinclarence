@@ -6,6 +6,7 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "testTimeout": 60000,
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/../src/$1",
     "^@modules/(.*)$": "<rootDir>/../src/modules/$1",

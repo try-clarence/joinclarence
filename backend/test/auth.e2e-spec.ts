@@ -35,6 +35,9 @@ describe('Auth API (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
 
+    // Set global prefix like in main.ts
+    app.setGlobalPrefix('api/v1');
+
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -49,9 +52,18 @@ describe('Auth API (e2e)', () => {
     redisService = moduleFixture.get<RedisService>(RedisService);
   });
 
+  beforeEach(async () => {
+    // Clear rate limits before each test to avoid 429 errors
+    await redisService.del(`rate-limit:sms:${testPhone}`);
+    await redisService.del(`rate-limit:password-reset:${testPhone}`);
+  });
+
   afterAll(async () => {
     // Cleanup test user
     await userRepository.delete({ phone: testPhone });
+    // Clear all rate limits for test phones
+    await redisService.del(`rate-limit:sms:${testPhone}`);
+    await redisService.del(`rate-limit:password-reset:${testPhone}`);
     await app.close();
   });
 
@@ -169,11 +181,15 @@ describe('Auth API (e2e)', () => {
     });
 
     it('should return 400 for weak password', async () => {
+      const weakPasswordPhone = '+14155558888';
+      // Clear rate limit for this phone
+      await redisService.del(`rate-limit:sms:${weakPasswordPhone}`);
+
       // Send new verification code
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/send-verification-code')
         .send({
-          phone: '+14155558888',
+          phone: weakPasswordPhone,
           purpose: 'registration',
         });
 
@@ -253,11 +269,15 @@ describe('Auth API (e2e)', () => {
         .expect(401);
     });
 
-    it('should return 401 for non-existent user', () => {
+    it('should return 401 for non-existent user', async () => {
+      const nonExistentPhone = '+14155550000';
+      // Clear any failed login attempts for this phone
+      await redisService.del(`failed-login:${nonExistentPhone}`);
+
       return request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({
-          phone: '+14155550000',
+          phone: nonExistentPhone,
           password: testPassword,
         })
         .expect(401);
@@ -423,6 +443,9 @@ describe('Auth API (e2e)', () => {
     it('should enforce SMS rate limit', async () => {
       const phone = '+14155557777';
 
+      // Clear rate limit for this specific phone before testing
+      await redisService.del(`rate-limit:sms:${phone}`);
+
       // Send 3 SMS (at limit)
       for (let i = 0; i < 3; i++) {
         await request(app.getHttpServer())
@@ -445,4 +468,3 @@ describe('Auth API (e2e)', () => {
     });
   });
 });
-

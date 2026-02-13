@@ -36,19 +36,6 @@ describe('FileStorageService', () => {
   });
 
   describe('uploadFile', () => {
-    const mockFile: Express.Multer.File = {
-      fieldname: 'file',
-      originalname: 'test.pdf',
-      encoding: '7bit',
-      mimetype: 'application/pdf',
-      buffer: Buffer.from('test content'),
-      size: 1024,
-      stream: null,
-      destination: '',
-      filename: '',
-      path: '',
-    };
-
     it('should generate unique file keys', async () => {
       // Note: This test won't actually upload to S3 in test environment
       // In real scenario, you'd mock the S3 client
@@ -79,4 +66,3 @@ describe('FileStorageService', () => {
     });
   });
 });
-
